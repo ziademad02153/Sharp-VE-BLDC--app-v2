@@ -164,18 +164,38 @@ class BrandLogoWidget(QWidget):
         painter.drawPath(wave)
 
 def find_image_file(target_name):
-    """Smart image locator handling .png.png, extensions, case differences, and hidden Windows extensions"""
-    base_dir = os.path.dirname(__file__)
-    screens_dir = os.path.join(base_dir, "screens")
-    if not os.path.exists(screens_dir):
-        return None
-    direct = os.path.join(screens_dir, target_name)
-    if os.path.exists(direct):
-        return direct
-    clean_target = target_name.replace(".png", "").replace(".jpg", "").replace(".jpeg", "")
-    for f in os.listdir(screens_dir):
-        if clean_target in f:
-            return os.path.join(screens_dir, f)
+    """Smart image locator checking multiple candidate folders and logging search results"""
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    cwd_dir = os.path.abspath(os.getcwd())
+    
+    clean_target = target_name.replace(".png", "").replace(".jpg", "").replace(".jpeg", "").strip()
+    
+    candidate_dirs = [
+        os.path.join(base_dir, "screens"),
+        os.path.join(base_dir, "Screens"),
+        os.path.join(base_dir, "screen"),
+        os.path.join(cwd_dir, "screens"),
+        os.path.join(cwd_dir, "Screens"),
+        base_dir,
+        cwd_dir
+    ]
+    
+    for folder in candidate_dirs:
+        if os.path.exists(folder) and os.path.isdir(folder):
+            direct = os.path.join(folder, target_name)
+            if os.path.exists(direct):
+                print(f"[IMAGE FOUND] Loaded exact match: {direct}")
+                return direct
+            try:
+                for f in os.listdir(folder):
+                    if ("175755" in target_name and "175755" in f) or ("182228" in target_name and "182228" in f) or (clean_target.lower() in f.lower()):
+                        found_path = os.path.join(folder, f)
+                        print(f"[IMAGE FOUND] Loaded flexible match: {found_path}")
+                        return found_path
+            except Exception:
+                pass
+
+    print(f"[IMAGE WARNING] Could not locate image for '{target_name}' in candidate folders.")
     return None
 
 class CircularProfileWidget(QWidget):
