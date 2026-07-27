@@ -1,0 +1,1323 @@
+{
+    "meta": {
+        "source_file": "Sharp VE BLDC 11,13kg V0.xlsx",
+        "model": "Sharp VE BLDC 11/13 kg",
+        "built_at": "2026-04-20 00:35:13.814211",
+        "total_programs": 12
+    },
+    "programs": {
+        "list": [
+            "Regular",
+            "Quick",
+            "Heavy",
+            "Baby Care",
+            "Cotton",
+            "Delicates",
+            "Wool",
+            "Jeans",
+            "Blanket",
+            "Quick Rinse",
+            "Sports Wear",
+            "Tub Clean"
+        ],
+        "vs_ac_extra": [
+            "Quick Rinse",
+            "Sports Wear"
+        ],
+        "note": "BLDC has 12 programs vs AC 10 programs (Differences Summary sheet)"
+    },
+    "course_groups": {
+        "Group 1": {
+            "programs": [
+                "Regular",
+                "Quick",
+                "Baby Care",
+                "Quick Rinse"
+            ],
+            "note_quick": "Quick skips M2 and M3 motion phases",
+            "source": "Course Group 1 sheet row 2-3"
+        },
+        "Group 2": {
+            "programs": [
+                "Jeans",
+                "Cotton",
+                "Heavy"
+            ],
+            "source": "Course Group 2 sheet row 2"
+        },
+        "Group 3": {
+            "programs": [
+                "Wool",
+                "Delicates",
+                "Sports Wear"
+            ],
+            "source": "Course Group 3 sheet row 2"
+        },
+        "Special": {
+            "programs": [
+                "Blanket",
+                "Tub Clean",
+                "Fragrance Rinse Spin"
+            ]
+        }
+    },
+    "sequence_chart": {
+        "Regular": {
+            "LEV-1": {
+                "main_wash_sec": 180,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 180,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            },
+            "LEV-2": {
+                "main_wash_sec": 720,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 240,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            },
+            "LEV-3": {
+                "main_wash_sec": 720,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 300,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            },
+            "LEV-4": {
+                "main_wash_sec": 720,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 360,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            }
+        },
+        "Quick": {
+            "LEV-1": {
+                "main_wash_sec": 180,
+                "rinse_count": 1,
+                "drain_sec": 120,
+                "water_fill_sec": 180,
+                "rinse_wash_sec": 180,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 60
+            },
+            "LEV-2": {
+                "main_wash_sec": 180,
+                "rinse_count": 1,
+                "drain_sec": 120,
+                "water_fill_sec": 240,
+                "rinse_wash_sec": 180,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 60
+            },
+            "LEV-3": {
+                "main_wash_sec": 180,
+                "rinse_count": 1,
+                "drain_sec": 120,
+                "water_fill_sec": 300,
+                "rinse_wash_sec": 180,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 60
+            },
+            "LEV-4": {
+                "main_wash_sec": 180,
+                "rinse_count": 1,
+                "drain_sec": 120,
+                "water_fill_sec": 360,
+                "rinse_wash_sec": 180,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 60
+            }
+        },
+        "Heavy": {
+            "LEV-1": {
+                "main_wash_sec": 720,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 180,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 540
+            },
+            "LEV-2": {
+                "main_wash_sec": 1080,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 240,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 540
+            },
+            "LEV-3": {
+                "main_wash_sec": 1080,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 300,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 540
+            },
+            "LEV-4": {
+                "main_wash_sec": 1080,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 360,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 540
+            }
+        },
+        "Baby Care": {
+            "LEV-1": {
+                "main_wash_sec": 720,
+                "rinse_count": 3,
+                "drain_sec": 120,
+                "water_fill_sec": 180,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            },
+            "LEV-2": {
+                "main_wash_sec": 720,
+                "rinse_count": 3,
+                "drain_sec": 120,
+                "water_fill_sec": 240,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            },
+            "LEV-3": {
+                "main_wash_sec": 720,
+                "rinse_count": 3,
+                "drain_sec": 120,
+                "water_fill_sec": 300,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            },
+            "LEV-4": {
+                "main_wash_sec": 720,
+                "rinse_count": 3,
+                "drain_sec": 120,
+                "water_fill_sec": 360,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            }
+        },
+        "Cotton": {
+            "LEV-1": {
+                "main_wash_sec": 1080,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 180,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            },
+            "LEV-2": {
+                "main_wash_sec": 1080,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 240,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            },
+            "LEV-3": {
+                "main_wash_sec": 1080,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 300,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            },
+            "LEV-4": {
+                "main_wash_sec": 1080,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 360,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            }
+        },
+        "Delicates": {
+            "LEV-3": {
+                "main_wash_sec": 540,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 300,
+                "rinse_wash_sec": 120,
+                "balance_spin_sec": 155,
+                "final_spin_sec": 300
+            },
+            "LEV-4": {
+                "main_wash_sec": 540,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 360,
+                "rinse_wash_sec": 120,
+                "balance_spin_sec": 155,
+                "final_spin_sec": 300
+            }
+        },
+        "Wool": {
+            "LEV-3": {
+                "main_wash_sec": 540,
+                "rinse_count": 1,
+                "drain_sec": 120,
+                "water_fill_sec": 300,
+                "rinse_wash_sec": 120,
+                "balance_spin_sec": 155,
+                "final_spin_sec": 60
+            },
+            "LEV-4": {
+                "main_wash_sec": 540,
+                "rinse_count": 1,
+                "drain_sec": 120,
+                "water_fill_sec": 360,
+                "rinse_wash_sec": 120,
+                "balance_spin_sec": 155,
+                "final_spin_sec": 60
+            }
+        },
+        "Jeans": {
+            "LEV-1": {
+                "main_wash_sec": 1080,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 180,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            },
+            "LEV-2": {
+                "main_wash_sec": 1080,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 240,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            },
+            "LEV-3": {
+                "main_wash_sec": 1080,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 300,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            },
+            "LEV-4": {
+                "main_wash_sec": 1080,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 360,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            }
+        },
+        "Blanket": {
+            "LEV-4": {
+                "main_wash_sec": 710,
+                "rinse_count": 2,
+                "drain_sec": 120,
+                "water_fill_sec": 360,
+                "rinse_wash_sec": 240,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 540
+            }
+        },
+        "Tub Clean": {
+            "LEV-4": {
+                "main_wash_sec": 10800,
+                "rinse_count": 1,
+                "drain_sec": 120,
+                "water_fill_sec": 360,
+                "rinse_wash_sec": 180,
+                "balance_spin_sec": 155,
+                "final_spin_sec": 130
+            }
+        },
+        "Quick Rinse": {
+            "LEV-1": {
+                "main_wash_sec": 0,
+                "rinse_count": 1,
+                "drain_sec": 120,
+                "water_fill_sec": 180,
+                "rinse_wash_sec": 120,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            },
+            "LEV-2": {
+                "main_wash_sec": 0,
+                "rinse_count": 1,
+                "drain_sec": 120,
+                "water_fill_sec": 240,
+                "rinse_wash_sec": 120,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            },
+            "LEV-3": {
+                "main_wash_sec": 0,
+                "rinse_count": 1,
+                "drain_sec": 120,
+                "water_fill_sec": 300,
+                "rinse_wash_sec": 120,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            },
+            "LEV-4": {
+                "main_wash_sec": 0,
+                "rinse_count": 1,
+                "drain_sec": 120,
+                "water_fill_sec": 360,
+                "rinse_wash_sec": 120,
+                "balance_spin_sec": 180,
+                "final_spin_sec": 300
+            }
+        },
+        "Sports Wear": {
+            "LEV-1": {
+                "main_wash_sec": 180,
+                "rinse_count": 1,
+                "drain_sec": 120,
+                "water_fill_sec": 180,
+                "rinse_wash_sec": 120,
+                "balance_spin_sec": 155,
+                "final_spin_sec": 300
+            },
+            "LEV-2": {
+                "main_wash_sec": 540,
+                "rinse_count": 1,
+                "drain_sec": 120,
+                "water_fill_sec": 240,
+                "rinse_wash_sec": 120,
+                "balance_spin_sec": 155,
+                "final_spin_sec": 300
+            },
+            "LEV-3": {
+                "main_wash_sec": 540,
+                "rinse_count": 1,
+                "drain_sec": 120,
+                "water_fill_sec": 300,
+                "rinse_wash_sec": 120,
+                "balance_spin_sec": 155,
+                "final_spin_sec": 300
+            },
+            "LEV-4": {
+                "main_wash_sec": 540,
+                "rinse_count": 1,
+                "drain_sec": 120,
+                "water_fill_sec": 360,
+                "rinse_wash_sec": 120,
+                "balance_spin_sec": 155,
+                "final_spin_sec": 300
+            }
+        }
+    },
+    "water_levels": {
+        "LEV-1": {
+            "display": 1,
+            "liters": 28,
+            "load_kg": "0-2"
+        },
+        "LEV-2": {
+            "display": 2,
+            "liters": 50,
+            "load_kg": "3-5"
+        },
+        "LEV-3": {
+            "display": 3,
+            "liters": 71,
+            "load_kg": "6-8"
+        },
+        "LEV-4": {
+            "display": 4,
+            "liters": 93,
+            "load_kg": "9-13"
+        },
+        "formula": "y = 21.6x + 6.5 (x=load kg, y=water liters)",
+        "source": "Water Levels sheet"
+    },
+    "motor_timings": {
+        "Group1": {
+            "1": {
+                "m2_cw_sec": 0.5,
+                "m2_ccw_sec": 0.5
+            },
+            "2": {
+                "m2_cw_sec": 0.8,
+                "m2_ccw_sec": 0.8
+            },
+            "3": {
+                "m2_cw_sec": 1.3,
+                "m2_ccw_sec": 1.3
+            },
+            "4": {
+                "m2_cw_sec": 1.5,
+                "m2_ccw_sec": 1.5
+            }
+        },
+        "Group2": {
+            "1": {
+                "m2_cw_sec": 0.7,
+                "m2_ccw_sec": 0.7
+            },
+            "2": {
+                "m2_cw_sec": 1.0,
+                "m2_ccw_sec": 1.0
+            },
+            "3": {
+                "m2_cw_sec": 1.2,
+                "m2_ccw_sec": 1.2
+            },
+            "4": {
+                "m2_cw_sec": 1.8,
+                "m2_ccw_sec": 1.8
+            }
+        },
+        "Group3": {
+            "1": {
+                "m2_cw_sec": 0.5,
+                "m2_ccw_sec": 0.5
+            },
+            "2": {
+                "m2_cw_sec": 0.5,
+                "m2_ccw_sec": 0.5
+            },
+            "3": {
+                "m2_cw_sec": 0.5,
+                "m2_ccw_sec": 0.5
+            },
+            "4": {
+                "m2_cw_sec": 0.5,
+                "m2_ccw_sec": 0.5
+            }
+        }
+    },
+    "errors": [
+        {
+            "code": "E5",
+            "name": "Water Supply Failure",
+            "detection": "Water supply not finished within 20 minutes",
+            "buzzer": "Every 10 min for 10 sec",
+            "release": "Open/close lid, check remedy, press START/PAUSE",
+            "remedy": "Check inlet hose, tap, frozen pipe, valve filter, pressure",
+            "daq_detectable": true,
+            "daq_method": "Cold/Hot valve ON >20 min with no level change"
+        },
+        {
+            "code": "E1",
+            "name": "Drain Failure",
+            "detection": "Water level doesn't reach reset level within 15 minutes from drain start",
+            "buzzer": "Every 10 min for 10 sec",
+            "release": "Open/close lid, press START/PAUSE. If still error: water level calibration",
+            "remedy": "Check drain hose frozen/blocked/height/immersed in water",
+            "daq_detectable": true,
+            "daq_method": "Pump ON >15 min (150s test limit)"
+        },
+        {
+            "code": "E2",
+            "name": "Lid Opening Failure",
+            "detection": "Lid opened during delay start, wash, rinse or spin processes",
+            "buzzer": "Every 10 min for 10 sec",
+            "release": "Close lid, machine operates automatically",
+            "remedy": "Is the lid opened?",
+            "daq_detectable": true,
+            "daq_method": "Door signal = OPEN during WASH/RINSE/SPIN phase"
+        },
+        {
+            "code": "E3-2",
+            "name": "Unbalance Failure",
+            "detection": "Clothes collected on one side during spin AND automatic correction failed 3 times",
+            "buzzer": "Every 10 min for 10 sec",
+            "release": "Open/close lid, check remedy, press START/PAUSE",
+            "remedy": "Are clothes collected on one side? Is machine on uneven surface?",
+            "daq_detectable": false,
+            "daq_method": "Requires MEMS sensor data (not in current DAQ setup)"
+        },
+        {
+            "code": "E6-1",
+            "name": "Overflow Failure",
+            "detection": "1) Continuous water supply failure reaches normal overflow level (pump ON only). 2) Water reaches dangerous level (pump ON, inlets closed). 3) Water remains at dangerous overflow for 5 min",
+            "buzzer": "Every 10 min for 10 sec",
+            "release": "Press Power off, close tap, drain manually. If still: water level calibration",
+            "remedy": "Inlet valve defective, drain pump defective, water level sensor defective, PCB, pressure tube leakage",
+            "daq_detectable": true,
+            "daq_method": "Cold+Hot valve ON + Pump ON simultaneously = overflow attempt"
+        },
+        {
+            "code": "E5-1",
+            "name": "Abnormal Water Level Sensor Reading",
+            "detection": "Detected water level frequency out of normal range",
+            "buzzer": "Every 10 min for 10 sec",
+            "release": "Press Power off, check remedy",
+            "remedy": "Water level sensor defective, PCB defective",
+            "daq_detectable": false,
+            "daq_method": "Requires frequency measurement of water level sensor"
+        },
+        {
+            "code": "E7-1",
+            "name": "Motor CW Rotation Failure",
+            "detection": "Motor is short or open circuit in CW direction during wash",
+            "buzzer": "Every 10 min for 10 sec",
+            "release": "Press Power off, check remedy",
+            "remedy": "PCB or motor defective",
+            "daq_detectable": true,
+            "daq_method": "Motor signal = 0 during expected CW wash phase"
+        },
+        {
+            "code": "E7-2",
+            "name": "Motor CCW Rotation Failure",
+            "detection": "Motor is short or open circuit in CCW direction during wash",
+            "buzzer": "Every 10 min for 10 sec",
+            "release": "Press Power off, check remedy",
+            "remedy": "PCB or motor defective",
+            "daq_detectable": true,
+            "daq_method": "Motor signal = 0 during expected CCW wash phase"
+        },
+        {
+            "code": "E7-3",
+            "name": "Motor Spin Rotation Failure",
+            "detection": "Motor is short or open circuit in CW direction during spin",
+            "buzzer": "Every 10 min for 10 sec",
+            "release": "Press Power off, check remedy",
+            "remedy": "PCB or motor defective",
+            "daq_detectable": true,
+            "daq_method": "Motor signal = 0 during SPIN phase"
+        },
+        {
+            "code": "E7-4",
+            "name": "Motor CW/CCW Rotation Failure",
+            "detection": "Motor is short or open circuit in BOTH CW & CCW direction during wash",
+            "buzzer": "Every 10 min for 10 sec",
+            "release": "Press Power off, check remedy",
+            "remedy": "PCB or motor defective",
+            "daq_detectable": true,
+            "daq_method": "Motor signal = 0 during entire WASH phase"
+        },
+        {
+            "code": "E9",
+            "name": "Abnormal Water Leakage Failure",
+            "detection": "During wash (NOT filling), there is no water in the tub",
+            "buzzer": "Every 10 min for 10 sec",
+            "release": "Press Power off, check remedy",
+            "remedy": "Check tub for cracks, PCB defective",
+            "daq_detectable": false,
+            "daq_method": "Requires water level sensor (frequency) - not in current DAQ"
+        },
+        {
+            "code": "E3",
+            "name": "MEMS Failure",
+            "detection": "MEMS sensor not working due to defect or wrong assembly",
+            "buzzer": "Every 10 min for 10 sec",
+            "release": "Press Power off, check remedy",
+            "remedy": "MEMS sensor defective",
+            "daq_detectable": false,
+            "daq_method": "Requires MEMS data"
+        },
+        {
+            "code": "Eb-1",
+            "name": "General Motor Failure",
+            "detection": "During machine startup, motor is still rotating and doesn't stop within 1 minute",
+            "buzzer": "Every 10 min for 10 sec",
+            "release": "Press Power off, check remedy",
+            "remedy": "PCB defective, motor defective",
+            "daq_detectable": true,
+            "daq_method": "Motor signal = 5V during IDLE/startup phase"
+        },
+        {
+            "code": "EA",
+            "name": "Abnormal Water When Dry Failure",
+            "detection": "During spin, water is in tub when it shouldn't be. Machine tries 5 correction attempts then shows error",
+            "buzzer": "Every 10 min for 10 sec",
+            "release": "Press Power off. If still: water level calibration",
+            "remedy": "Water inlet defective, drain blocked/too high, pressure tube loose, water level sensor, PCB",
+            "daq_detectable": true,
+            "daq_method": "Pump activates repeatedly during SPIN phase (should not happen)"
+        },
+        {
+            "code": "LP",
+            "name": "Low Power Failure",
+            "detection": "Voltage level drops below 160V for 5 minutes",
+            "buzzer": "Every 10 min for 10 sec",
+            "release": "Press Power off, check remedy",
+            "remedy": "Is the voltage level OK in the household?",
+            "daq_detectable": false,
+            "daq_method": "Requires voltage monitoring (not in current DAQ setup)"
+        }
+    ],
+    "spin_control": {
+        "standard_courses": {
+            "programs": [
+                "Regular",
+                "Heavy",
+                "Cotton",
+                "Baby Care",
+                "Jeans",
+                "Quick Rinse",
+                "Blanket"
+            ],
+            "rpm_curve_all_durations": {
+                "1_min": [
+                    {
+                        "time_sec": 0,
+                        "rpm": 0
+                    },
+                    {
+                        "time_sec": 15,
+                        "rpm": 300
+                    },
+                    {
+                        "time_sec": 35,
+                        "rpm": 300
+                    },
+                    {
+                        "time_sec": 155,
+                        "rpm": 600
+                    },
+                    {
+                        "time_sec": 160,
+                        "rpm": 600
+                    },
+                    {
+                        "time_sec": 180,
+                        "rpm": 700
+                    },
+                    {
+                        "time_sec": 240,
+                        "rpm": 700
+                    }
+                ],
+                "5_min": [
+                    {
+                        "time_sec": 0,
+                        "rpm": 0
+                    },
+                    {
+                        "time_sec": 15,
+                        "rpm": 300
+                    },
+                    {
+                        "time_sec": 35,
+                        "rpm": 300
+                    },
+                    {
+                        "time_sec": 155,
+                        "rpm": 600
+                    },
+                    {
+                        "time_sec": 160,
+                        "rpm": 600
+                    },
+                    {
+                        "time_sec": 180,
+                        "rpm": 700
+                    },
+                    {
+                        "time_sec": 480,
+                        "rpm": 700
+                    }
+                ],
+                "9_min": [
+                    {
+                        "time_sec": 0,
+                        "rpm": 0
+                    },
+                    {
+                        "time_sec": 15,
+                        "rpm": 300
+                    },
+                    {
+                        "time_sec": 35,
+                        "rpm": 300
+                    },
+                    {
+                        "time_sec": 155,
+                        "rpm": 600
+                    },
+                    {
+                        "time_sec": 160,
+                        "rpm": 600
+                    },
+                    {
+                        "time_sec": 180,
+                        "rpm": 700
+                    },
+                    {
+                        "time_sec": 720,
+                        "rpm": 700
+                    }
+                ]
+            },
+            "max_rpm": 700
+        },
+        "gentle_courses": {
+            "programs": [
+                "Delicates",
+                "Wool",
+                "Sports Wear"
+            ],
+            "max_rpm": 400,
+            "rpm_curve": [
+                {
+                    "time_sec": 0,
+                    "rpm": 0
+                },
+                {
+                    "time_sec": 15,
+                    "rpm": 300
+                },
+                {
+                    "time_sec": 35,
+                    "rpm": 300
+                },
+                {
+                    "time_sec": 155,
+                    "rpm": 400
+                },
+                {
+                    "time_sec": 240,
+                    "rpm": 400
+                }
+            ]
+        },
+        "spin_pause_at_reset_level_sec": 150,
+        "spin_end": "No braking - free fall after reaching spin end time",
+        "clutch_change_after_stop": "After RPM sensor stop signal, shift 20 seconds",
+        "pause_behavior": "If user pauses during spin twice, must restart from Balance Spin period",
+        "source": "Spin Control Specs sheet + spin control specs.png"
+    },
+    "pump_control": {
+        "max_continuous_sec": 150,
+        "required_off_sec": 10,
+        "overflow_threshold_liters": 103,
+        "operation_mode": "Continuous ON",
+        "e1_timeout_min": 15,
+        "note": "After 150s continuous ON, pump must stop for 10s. E1 triggers after 15 min no drain.",
+        "source": "Pump Control Specs sheet"
+    },
+    "weight_detection": {
+        "mechanism": "RPM sensor",
+        "start_direction": "CCW first",
+        "sequence": "CCW_ON \u2192 CCW_OFF \u2192 CW_ON \u2192 CW_OFF (repeated 4 times)",
+        "cw_on_ms": 300,
+        "cw_off_ms": 600,
+        "ccw_on_ms": 300,
+        "ccw_off_ms": 600,
+        "total_repeats": 4,
+        "cancelled_when": "Water level manually set OR water > LEV-1 exists",
+        "source": "Weight Detection Specs sheet"
+    },
+    "door_specs": {
+        "E2_trigger_delay_sec": 0.2,
+        "allowed_open_during": "Water filling before wash or rinse ONLY",
+        "after_close": "Machine continues automatically without pressing pause",
+        "source": "Door Opening Specs sheet"
+    },
+    "child_lock": {
+        "activation": "Press Soak + Delay Start simultaneously during execution",
+        "case_A": {
+            "condition": "Door opened then closed before 20 seconds",
+            "result": "Washing continues normally - PASS"
+        },
+        "case_B": {
+            "condition": "Door still open after 20 seconds",
+            "result": "Pump activates immediately, drains to reset level, WM turns off after 10 min"
+        },
+        "buzzer": "Every 10 minutes, buzzer alarms for 10 seconds during error",
+        "source": "Child Lock Specs sheet"
+    },
+    "water_inlet": {
+        "cold": "Cold valve only",
+        "warm": "Cold + Hot valves (cold fills to 50%, then hot fills to target)",
+        "hot": "Cold + Hot valves (cold fills to 33%, then hot fills to target)",
+        "rinse_temp": "Cold only always",
+        "error_EE4_threshold_deg": 63,
+        "source": "Water Inlet sheet"
+    },
+    "mems": {
+        "function": "Unbalance detection during spin",
+        "axes": {
+            "X": "Up/Down",
+            "Y": "Left/Right",
+            "Z": "Front/Rear"
+        },
+        "border_values_regular": {
+            "X": 10,
+            "Y": 28,
+            "Z": 28,
+            "NH": 40,
+            "CH": 5
+        },
+        "border_values_factory": {
+            "X": 10,
+            "Y": 38,
+            "Z": 38,
+            "NH": 60,
+            "CH": 20
+        },
+        "source": "Mems Specs sheet"
+    },
+    "power_cut": {
+        "behavior": "WM saves data and continues from same point when power returns",
+        "exception": "If cut during wash/rinse, restarts from beginning of that motion",
+        "resume": "Operates immediately when power returns - no button press needed",
+        "source": "Power Cut off sheet"
+    },
+    "soak": {
+        "available_for": [
+            "Regular",
+            "Wool",
+            "Blanket"
+        ],
+        "not_allowed_when": "Wash time = 3 min",
+        "durations": [
+            "1 hour",
+            "2 hours",
+            "4 hours"
+        ],
+        "soak_motor": {
+            "CW_sec": 2.4,
+            "OFF_sec": 2.6,
+            "CCW_sec": 2.4,
+            "OFF2_sec": 2.6
+        },
+        "source": "Soak sheet"
+    },
+    "blanket": {
+        "capacity_kg": 3,
+        "water_level": "LEV-4",
+        "wash_cw_sec": 3.8,
+        "wash_ccw_sec": 3.8,
+        "total_wash_sec": 710,
+        "source": "Blanket sheet"
+    },
+    "course_options": {
+        "selectable": [
+            "Water Temp",
+            "Wash Time",
+            "Rinse Times",
+            "Spin Time",
+            "Water Level",
+            "Soak",
+            "Delay Start",
+            "Anti-Wrinkle"
+        ],
+        "manual_wash_times_min": [
+            3,
+            9,
+            12,
+            18
+        ],
+        "manual_rinse_times": [
+            1,
+            2,
+            3
+        ],
+        "manual_spin_times": [
+            "1 min",
+            "5 min",
+            "9 min",
+            "Super Spin 20 min"
+        ],
+        "water_levels": [
+            1,
+            2,
+            3,
+            4
+        ],
+        "source": "Course Option sheet"
+    },
+    "ui_layout": {
+        "brand": "SHARP CORPORATION, JAPAN",
+        "technology": "J-TECH INVERTER",
+        "features": [
+            "SUPERHEX DRUM",
+            "COOL JET"
+        ],
+        "programs_count": 12,
+        "programs_order": [
+            "Regular",
+            "Quick",
+            "Heavy",
+            "Baby Care",
+            "Cotton",
+            "Delicates",
+            "Wool",
+            "Quick Rinse",
+            "Jeans",
+            "Blanket",
+            "Tub Clean",
+            "Sports Wear"
+        ],
+        "options": [
+            "Anti-Wrinkle",
+            "Delay Start",
+            "Soak",
+            "Child Lock"
+        ],
+        "manual_selections": {
+            "Water_Temp": [
+                "Cold",
+                "Warm",
+                "Hot"
+            ],
+            "Wash_Time": [
+                "3 min",
+                "9 min",
+                "12 min",
+                "18 min"
+            ],
+            "Rinse_Times": [
+                "1 time",
+                "2 times",
+                "3 times"
+            ],
+            "Spin_Time": [
+                "1 min",
+                "5 min",
+                "9 min",
+                "Super Spin (20 min)"
+            ],
+            "Water_Level": [
+                "LEV-1",
+                "LEV-2",
+                "LEV-3",
+                "LEV-4"
+            ]
+        },
+        "display": "3-digit 7-segment (Hrs, Mins, Times)",
+        "source": "Layout.png"
+    },
+    "differences_summary": {
+        "BLDC_vs_AC": {
+            "programs_count": {
+                "AC": 10,
+                "BLDC": 12
+            },
+            "extra_in_BLDC": [
+                "Quick Rinse",
+                "Sports Wear"
+            ],
+            "display_digits": {
+                "AC": 4,
+                "BLDC": 3
+            },
+            "balance_spin": {
+                "AC": "ON/OFF",
+                "BLDC": "Spin Curve"
+            }
+        },
+        "Tornado_vs_Sharp": {
+            "programs_count": {
+                "Tornado": 9,
+                "Sharp": 12
+            },
+            "Tornado_has_not_in_Sharp": [
+                "Rapid (Sharp has Quick instead)",
+                "Stain LVL",
+                "Extra Spin"
+            ],
+            "Sharp_extra": [
+                "Quick Rinse",
+                "Sports Wear"
+            ],
+            "note": "In Tornado, Tub Clean is an option not a program"
+        },
+        "11kg_vs_13kg": {
+            "only_difference": "Water amount at LEV-4 before M2 motion",
+            "Sharp_VE_BLDC_11kg": "90 Liters",
+            "Sharp_VE_BLDC_13kg": "93 Liters"
+        },
+        "source": "Differences Summary.png"
+    },
+    "hardware_io": {
+        "inputs": {
+            "Operation_Switches": "User buttons on panel",
+            "Water_Pressure_Sensor": "Monitors water level frequency",
+            "Temperature_Sensor": "CROSSED OUT - NOT USED in this model",
+            "MEMS_Acceleration_Sensor": "Detects unbalance during spin",
+            "Motor_Feedback": "BLDC motor feedback signal",
+            "Lid_Switch": "Door open/close detection",
+            "RPM_Sensor": "Separate sensor - measures motor RPM (Hall sensor output)"
+        },
+        "outputs": {
+            "Display": "3-digit 7-segment + LEDs",
+            "Cold_Water_Valve": "AI channel - relay 0/5V",
+            "Softener_Water_Valve": "Exists in hardware! (not monitored in current setup)",
+            "Hot_Water_Valve": "AI channel - relay 0/5V",
+            "Clutch_Geared_Motor": "AI channel - relay 0/5V (separate from BLDC!)",
+            "BLDC_Motor": "Controlled by inverter - RPM via external sensor",
+            "Drain_Pump": "AI channel - relay 0/5V"
+        },
+        "note": "Temperature Sensor is crossed out = not present in this model. RPM Sensor is SEPARATE from Motor Feedback."
+    },
+    "operation_settings": {
+        "changeable_during_run": {
+            "Water_Level": {
+                "allowed": false,
+                "note": "Allowed during wash or rinse - requires Pause"
+            },
+            "Water_Temp": {
+                "allowed": false,
+                "note": "Allowed during wash only. Rinse always cold. Requires Pause"
+            },
+            "Wash_Time": {
+                "allowed": false,
+                "note": "Allowed during wash only - requires Pause"
+            },
+            "Rinse_Times": {
+                "allowed": false,
+                "note": "Allowed during wash and rinse - requires Pause"
+            },
+            "Spin_Times": {
+                "allowed": false,
+                "note": "Allowed during Wash, Rinse & Spin - requires Pause"
+            },
+            "Program": {
+                "allowed": false,
+                "note": "INVALID - cannot change after START"
+            },
+            "Delay_Start": {
+                "allowed": false,
+                "note": "INVALID - cannot change after START"
+            },
+            "Child_Lock": {
+                "allowed": true,
+                "note": "Allowed during any time - Execution/pause state"
+            },
+            "Anti_Wrinkle": {
+                "allowed": false,
+                "note": "Allowed during rinse or wash only. Once entering spin, cannot change. Requires Pause"
+            },
+            "Soak": {
+                "allowed": false,
+                "note": "Allowed only during wash - requires Pause"
+            }
+        },
+        "buzzer_tones": {
+            "Pause": "APP_BUZZER_PROGRAM_PAUSE_TONE",
+            "ReStart": "APP_BUZZER_START_UP_TONE",
+            "Invalid": "APP_BUZZER_KEY_INVALID_PRESS_TONE",
+            "Program_Switch": "APP_BUZZER_KEY_VALID_PRESS_TONE"
+        },
+        "source": "Table3.png"
+    },
+    "unbalance_protocol": {
+        "error_code": "E3-2",
+        "trigger": "After 3 failed spin attempts with automatic correction",
+        "correction_sequence": [
+            "Water Supply",
+            "Stirring (motor CW/CCW)",
+            "Drain Water",
+            "Re-attempt Spin"
+        ],
+        "max_correction_attempts": 3,
+        "final_spin_trigger": "E3 after 3 failed final spin attempts",
+        "super_spin_protocol": {
+            "note": "Only SUPER SPIN DRY starts process from *1 at the setting",
+            "unbalance_stir_ON_sec": 0.3,
+            "unbalance_stir_OFF_sec": 1.2,
+            "stir_timeout_sec": 10
+        },
+        "source": "Unbalance protocol.png"
+    },
+    "tub_clean": {
+        "water_supply_and_stirring": {
+            "step1": {
+                "water_liters": 28,
+                "motor_CW_sec": 3.4,
+                "stop_sec": 4.6,
+                "motor_CCW_sec": 3.4,
+                "stop2_sec": 4.6,
+                "total_stir_sec": 120
+            },
+            "step2": {
+                "water_liters": 50,
+                "stirring": "Same as first stirring"
+            },
+            "step3": {
+                "water_liters": 71,
+                "stirring": "Same as first stirring"
+            },
+            "step4": {
+                "water_liters": 93,
+                "stirring": "Same as first stirring"
+            }
+        },
+        "soak": {
+            "water_level": "4th (93L)",
+            "motor_CW_sec": 1.5,
+            "stop1_sec": 1.0,
+            "motor_CCW_sec": 1.5,
+            "stop2_sec": 1.0,
+            "total_min": 20,
+            "pattern": "Stir 1 minute then stop 4 minutes - repeated within 20 min"
+        },
+        "wash": {
+            "motor_CW_sec": 1.5,
+            "stop1_sec": 1.0,
+            "motor_CCW_sec": 1.5,
+            "stop2_sec": 1.0,
+            "total_min": 180
+        },
+        "spin_sequence": {
+            "1st_spin": {
+                "top_rpm": 70,
+                "ramp_rpm_per_sec": 10,
+                "after_stop": "shift to next process (MAX 30s)",
+                "then": "Drain Water \u2192 reset water level"
+            },
+            "2nd_spin": {
+                "top_rpm": 700,
+                "ON_sec": 100,
+                "after_stop": "shift to next process (MAX 30)"
+            },
+            "water_stir_wash": {
+                "note": "Same as water supply with stirring specs"
+            },
+            "wash_phase": {
+                "motor_CW_sec": 1.5,
+                "motor_CCW_sec": 1.5,
+                "total_sec": 3
+            },
+            "3rd_spin": {
+                "top_rpm": 70,
+                "ramp_rpm_per_sec": 10,
+                "after_stop": "shift next (MAX 30)"
+            },
+            "4th_spin": {
+                "note": "Drain valve open",
+                "top_rpm": 700,
+                "ON_sec": 100,
+                "after_stop": "shift next (MAX 30)"
+            }
+        },
+        "rules": [
+            "No supply water is added during wash",
+            "Reservations (Delay Start) cannot be set",
+            "Abnormality detection same as regular course operation"
+        ],
+        "source": "Tub clean.png + Tub clean part 2.png"
+    },
+    "course_option_detail": {
+        "Quick_Rinse": {
+            "wash_time": "0 (NO WASH - rinse only!)",
+            "rinse_times_default": 1,
+            "spin_time_default": "5 min",
+            "water_temp": "Cold only",
+            "water_level": "All levels available",
+            "soak": "NOT available",
+            "weight_detection": true,
+            "anti_wrinkle": true
+        },
+        "Tub_Clean": {
+            "wash_time": "NOT selectable (fixed)",
+            "rinse_times": "NOT selectable",
+            "spin_time": "NOT selectable",
+            "water_level": "NOT selectable (fixed LEV-4)",
+            "water_temp": "NOT selectable",
+            "soak": "NOT available",
+            "weight_detection": false,
+            "anti_wrinkle": false,
+            "delay_start": true
+        },
+        "Quick": {
+            "wash_time_default": "3 min",
+            "rinse_times_default": 1,
+            "spin_time_default": "1 min",
+            "water_temp_default": "Cold",
+            "soak": "NOT available",
+            "weight_detection": true
+        },
+        "Delicates": {
+            "water_temp_default": "Cold",
+            "wash_time_default": "9 min",
+            "rinse_times_default": 2,
+            "spin_time_default": "5 min",
+            "weight_detection": false,
+            "note": "Wool type motion, gentle wash"
+        },
+        "Wool": {
+            "water_temp_default": "Cold",
+            "wash_time_default": "9 min",
+            "rinse_times_default": 1,
+            "spin_time_default": "1 min",
+            "weight_detection": false
+        },
+        "Sports_Wear": {
+            "wash_time_default": "9 min",
+            "rinse_times_default": 1,
+            "spin_time_default": "5 min",
+            "weight_detection": true,
+            "water_temp": "Warm default"
+        },
+        "source": "Course Option.png"
+    },
+    "weight_detection_display": {
+        "before_WD": "7-segment shows approximate program duration",
+        "during_WD": {
+            "water_level_LEDs": "Animation pattern: bottom to top then top to bottom, repeat. One full cycle = 1.5 SEC. Each LED fades in/out as next begins.",
+            "seven_segment": "Shows dashes: - - - -",
+            "program_LEDs": "Not affected",
+            "function_LEDs": "Not affected"
+        },
+        "after_WD": {
+            "water_level_LEDs": "Detected water level LED lights ON",
+            "seven_segment": "Shows program duration for 3 seconds then starts counting down"
+        },
+        "source": "WD.png"
+    },
+    "rinse_process": {
+        "types": {
+            "Static_Rinse_W": "Wide rinse - used as last rinse always",
+            "Static_Rinse_S": "Short rinse - used for intermediate rinses"
+        },
+        "by_rinse_count": {
+            "1_time": [
+                "Static_Rinse_W"
+            ],
+            "2_times": [
+                "Static_Rinse_S",
+                "Static_Rinse_W"
+            ],
+            "3_times": [
+                "Static_Rinse_S",
+                "Static_Rinse_S",
+                "Static_Rinse_W"
+            ]
+        },
+        "water_temp": "Cold only - ALWAYS",
+        "water_level": "4th level if not manually selected",
+        "spin_pause_at_reset_level_sec": 150,
+        "after_spin_shift_next_process_sec": 20,
+        "source": "Rinse.png"
+    },
+    "quick_rinse_special": {
+        "wash_time": 0,
+        "note": "Quick Rinse has NO wash phase at all - goes directly to rinse",
+        "rinse_count_default": 1,
+        "total_time_min": {
+            "LEV-1": 24,
+            "LEV-2": 25,
+            "LEV-3": 26,
+            "LEV-4": 27
+        },
+        "source": "Sequence Chart2.png"
+    }
+}
