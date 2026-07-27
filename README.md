@@ -1,130 +1,155 @@
-# SHARP VE BLDC Automated HIL DAQ System
+# SHARP VE-BLDC Industrial HIL Validation Suite
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
 ![PyQt5](https://img.shields.io/badge/PyQt5-GUI-green.svg)
 ![Hardware-In-the-Loop](https://img.shields.io/badge/Testing-HIL-orange.svg)
 ![Status](https://img.shields.io/badge/Status-Industrial_Production_Ready-success.svg)
 
-##  Project Overview
-The **SHARP VE BLDC Automated HIL DAQ System** is an industrial-grade Hardware-In-the-Loop (HIL) validation platform specifically engineered for the **Sharp VE BLDC 11kg/13kg** washing machine series. 
+## Engineering Lead & Authorship
 
-By sampling 8 critical electrical channels via an NI-DAQ card at a high-fidelity 10Hz, the system acts as an automated "Factory Auditor," verifying that the embedded software logic complies with 100% of the industrial timing specifications, safety protocols, and fault-tree responses defined by the Sharp engineering standards.
+- **Lead R&D Systems Engineer**: Ziad Emad Allam
+- **Organization**: El Araby Group R&D Engineering Division
+- **System Domain**: Hardware-in-the-Loop (HIL) Automated Firmware Validation & SCADA Analytics
 
 ---
 
-##  System Architecture
+## Executive Summary
 
-The software follows a **Clean Architecture** pattern, isolating hardware acquisition from the core validation engine and the premium visualization layer.
+The **SHARP VE-BLDC Industrial HIL Validation Suite** is an advanced Hardware-In-the-Loop (HIL) automated testing and diagnostic platform engineered specifically for the **Sharp VE BLDC 11kg/13kg** washing machine firmware series.
+
+By sampling 8 high-speed electrical and frequency channels through a National Instruments DAQ hardware interface at 10,000 Hz with real-time DSP noise filtering, the system automates physical software verification. It validates 100% of the embedded timing specifications, agitation motor waveforms (M1-M4, MU, MR), safety protocols, and hydraulic fallback sequences defined by Sharp engineering standards.
+
+---
+
+## System Architecture
+
+The software architecture is designed using modular **Clean Architecture** principles, decoupling hardware signal acquisition, digital signal processing (DSP), finite state machine (FSM) phase inference, rule-based error evaluation, and industrial SCADA visualization.
 
 ```mermaid
 graph TD
-    subgraph Machine[Washing Machine Hardware]
-        HW[Sharp VE BLDC Unit]
+    subgraph Hardware[Physical Hardware Layer]
+        WM[Sharp VE BLDC Washing Machine]
     end
 
-    subgraph DAQ[Acquisition Layer]
-        NI[NI DAQ mx Driver / Simulated Telemetry]
+    subgraph DAQ[Acquisition & DSP Layer]
+        NI[NI-DAQmx Card / Telemetry Stream]
+        DSP[10kHz DSP Noise Filter & Schmitt Trigger]
     end
     
-    subgraph Core[Logic Validation Engine]
-        LM(Logic Monitor: Phase State Machine)
-        SV[Sequence Validator: Time-Domain Checks]
-        EM{Error Monitor: Industrial Fault Trees}
+    subgraph Core[Core Validation Engine]
+        LM[Logic Monitor: FSM State Machine]
+        AA[Agitation Analyzer: M1-M4/MU Motion Extraction]
+        SV[Sequence Validator: Program Spec Matcher]
+        EM[Error Monitor: Sharp Fault Trees & Hydraulic Checks]
     end
     
-    subgraph UI[Premium Dashboard]
-        Dashboard[Real-time SCADA Display]
-        Plot[Live Signal Oscilloscope]
+    subgraph UI[SCADA Visualization Layer]
+        Header[El Araby Brand Header & Live Pipeline Stepper Bar]
+        Cards[Digital I/O Status Cards]
+        Scope[Live 8-Channel Oscilloscope Display]
+        Adv[Advanced Hardware Dynamics Panel]
     end
     
-    subgraph Output[Compliance Reporting]
-        Excel[Automated Multi-Sheet Verification Report]
+    subgraph Output[Automated Reporting Engine]
+        Excel[Multi-Sheet Excel Report Generator]
     end
 
-    HW -- 8 Analog Channels --> NI
-    NI -- 10Hz Signal Array --> LM
-    LM -- Phase Tracking --> Dashboard
-    LM -- Standards Matching --> SV
-    LM -- Failure Detection --> EM
-    EM -- Fault Alarms --> Dashboard
-    SV & EM -- Compliance Results --> Excel
+    WM -- 8 Physical Channels --> NI
+    NI -- Raw Analog Data --> DSP
+    DSP -- Clean 10Hz Telemetry --> LM
+    LM -- Signal Array --> AA
+    LM -- State Tracking --> Header
+    LM -- Phase Compliance --> SV
+    LM -- Voltage & Frequency Checks --> EM
+    AA & EM -- Failure Logs --> Adv
+    SV & EM & AA -- Complete Dataset --> Excel
 ```
 
 ---
 
-##  Enhanced State Machine Logic
+## Finite State Machine (FSM) & Hydraulic Logic
 
-The engine infers the machine's physical state using high-precision electrical heuristics, now supporting advanced BLDC phases:
+The core logic engine infers physical washer operations from analog voltage levels and motor frequency pulses. It supports 12 factory programs across 4 water levels:
 
 ```mermaid
 stateDiagram-v2
     [*] --> IDLE
     IDLE --> WEIGHT_DETECT : Motor CW/CCW Pulses (7.2s Sequence)
-    WEIGHT_DETECT --> WATER_FILL : Valves Activated
-    IDLE --> WATER_FILL : Valves Activated
+    WEIGHT_DETECT --> WATER_FILL : Valve Voltage Active (>2.0V)
+    IDLE --> WATER_FILL : Valve Voltage Active (>2.0V)
     
-    WATER_FILL --> WASH : Fill Complete & Agitation Start
-    WATER_FILL --> DRAIN : Pump Triggered
+    WATER_FILL --> WASH : Fill Complete & Agitation Motion Starts
+    WATER_FILL --> DRAIN : Drain Pump Active (>2.0V)
+    WATER_FILL --> HYDRAULIC_FALLBACK : Hot Valve Interrupted (30s Timer)
+    HYDRAULIC_FALLBACK --> WATER_FILL : Cold Valve Reopens
     
-    WASH --> DRAIN : Pump Triggered
-    WASH --> WATER_FILL : Level Drop / Refill
+    WASH --> DRAIN : Drain Pump Active
+    WASH --> WATER_FILL : Level Drop / Water Refill
     
-    DRAIN --> SPIN_PAUSE : Pump Stopped (150s Clutch Shift)
-    SPIN_PAUSE --> SPIN : Motor Ramp-up
+    DRAIN --> SPIN_PAUSE : Pump Stop & Clutch Transition (150s)
+    SPIN_PAUSE --> SPIN : Motor Ramp (300 RPM Balance -> 600/700 RPM)
     
-    SPIN --> IDLE : Power Down
-    IDLE --> ANTI_WRINKLE : Post-Spin Motor Pulsing (120s)
-    ANTI_WRINKLE --> IDLE : Cycle End
+    SPIN --> IDLE : Power Cutoff / Cycle Finish
+    SPIN --> UNTANGLE : Post-Spin Micro Agitation (MU)
+    UNTANGLE --> IDLE : Cycle End
 ```
 
 ---
 
-##  Industrial Fault Tree Library (Sharp Standard)
+## Industrial Fault Tree & Safety Library
 
-The **ErrorMonitor** is now pre-loaded with the complete Sharp failure database, enabling automated bug detection across 10+ critical failure scenarios:
+The **ErrorMonitor** continuously checks telemetry against Sharp industrial fault specifications and hydraulic failure rules:
 
-| Code | Fault Name | Validation Logic |
-| :--- | :--- | :--- |
-| **E1** | Drain Failure | Triggered if tub level doesn't reset within 15 minutes of pump activity. |
-| **E2** | Lid Safety Fault | Immediate flag if lid is opened while high-speed spin or heating is active. |
-| **E3-2** | Unbalance Failure | Detects if the machine fails to correct load unbalance after 3 refill attempts. |
-| **E5** | Supply Failure | Flagged if target water level isn't reached within 20 minutes of valve opening. |
-| **E6-1** | Overflow Fault | Safety breach if inlet valves and drain pump are active simultaneously for >5 min. |
-| **E7-X** | Motor Rotation | Detects hall-sensor/inverter failures during wash (E7-1) or spin (E7-3). |
-| **E9** | Leakage Fault | Triggered if water level drops unexpectedly during an active wash phase. |
-| **EA** | Abnormal Water | Critical safety check: Water detected in tub during high-speed spin. |
-| **Eb-1** | Motor Relay Stuck | Protects against motor relay fusing by detecting unplanned rotation at IDLE. |
-
----
-
-##  Dynamic Configuration System
-
-The system is 100% data-driven. All timing rules, program sequences, and error thresholds are parsed dynamically from `sharp_spec.json`. This allows the platform to support multiple machine variants (11kg vs 13kg) without any code changes.
-
-- **12 Sharp BLDC Programs supported** (Regular, Quick, Heavy, Baby Care, etc.)
-- **4 Water Levels per program** with dedicated timing curves.
-- **Strict vs Max-Limit Validation**: Phases are evaluated against rigid factory tolerances.
+| Fault Code | Failure Description | Trigger Logic & Tolerances | Severity |
+| :--- | :--- | :--- | :--- |
+| **E1** | Drain Timeout | Tub water level fails to reset within 15 minutes of continuous pump operation. | CRITICAL |
+| **E2** | Lid Safety Violation | Lid opened during active washing motor stroke or high-speed spin phase. | HIGH |
+| **E3-2** | Unbalance Failure | Machine fails load redistribution after 3 consecutive spin pause/refill retries. | HIGH |
+| **E5** | Water Fill Timeout | Target water level frequency not reached within 20 minutes of inlet valve opening. | HIGH |
+| **E6-1** | Overflow Risk | Inlet valves and drain pump remain active simultaneously for >10 seconds. | CRITICAL |
+| **E7-1 / E7-3** | Motor Hall Failure | Hall-sensor feedback missing during active Wash (E7-1) or Spin (E7-3). | CRITICAL |
+| **E9** | Water Leakage | Unexpected water level frequency drop detected during active Wash phase. | HIGH |
+| **EA** | Abnormal Water Level | Water detected in tub during high-speed Spin phase. | CRITICAL |
+| **Eb-1** | Motor Relay Fused | Unplanned motor rotation detected while state machine is IDLE. | CRITICAL |
+| **HE-FALLBACK-DELAY** | Hydraulic Delay Violation | Cold water valve reopening delayed by >30s during hot water supply fallback sequence. | HIGH |
+| **HE-HOT-CUTOFF** | Hot Valve Cutoff Defect | Hot water valve command shut off (0V) during fallback instead of staying active. | CRITICAL |
+| **PUMP-DUTY** | Thermal Duty Overload | Drain pump continuous operation exceeds 150s or violates 10s minimum cooldown. | MEDIUM |
 
 ---
 
-##  Automated Reporting Engine
+## Key Technical Features
 
-Upon hitting **STOP**, the engine generates a professional `.xlsx` compliance report:
-1. **Analysis Summary**: Executive view showing PASS/FAIL status for every phase, with automated technical evidence and timestamps.
-2. **Raw Telemetry**: 10Hz sampling history for deep-dive root cause analysis.
+1. **Agitation Motion Extraction (M1, M2, M3, M4, MU, MR):**
+   - Automatically measures Clockwise (CW), Counter-Clockwise (CCW), and Stop durations in milliseconds for Group 1, Group 2, Group 3, Blanket, and Tub Clean programs.
+
+2. **Process Pipeline Stepper Bar:**
+   - Real-time industrial SCADA stepper bar with active glowing neon indicators, completed phase checkmarks (`✓`), and dynamic iteration badges (`RINSE #1`, `DRAIN #2`).
+
+3. **Multi-Sheet Executive Excel Reporting:**
+   - **Raw Telemetry**: High-resolution 10Hz data log with timestamp breakdown (H, Min, Sec, ms).
+   - **Automated Verification**: Phase-by-phase compliance summary with expected vs actual durations.
+   - **Raw Data Defect Report**: Priority-sorted bug log with exact start/end row ranges (`Row X-Y`) and evidence logs.
 
 ---
 
-##  Installation & Hardware Setup
+## Installation & Execution
 
-1. **Environment Setup:**
-   ```bash
-   pip install PyQt5 pyqtgraph pandas xlsxwriter nidaqmx qtawesome
-   ```
-2. **Hardware Configuration:** Connect your National Instruments DAQ unit. Channels are mapped according to the **Hardware IO** specs in `sharp_spec.json`.
-3. **Execution:**
-   ```bash
-   python main.py
-   ```
+### Prerequisites
+- Python 3.8+
+- National Instruments DAQmx Driver (optional for live hardware DAQ, simulated mode supported natively)
 
-> **Safety Warning**: This system is designed for professional industrial environments. Ensure all high-voltage isolation protocols are followed when connecting the machine signals to the DAQ inputs.
+### Setup Command
+```bash
+pip install PyQt5 pyqtgraph pandas xlsxwriter nidaqmx qtawesome openpyxl
+```
+
+### Running the Suite
+```bash
+python main.py
+```
+
+---
+
+## Industrial Compliance & Verification
+
+This platform is deployed for validation of embedded firmware logic in Sharp washing machine controllers manufactured by El Araby Group. All timing tolerances conform strictly to Sharp Factory Standard Specification `Sharp VE BLDC 11,13kg V0.xlsx`.
