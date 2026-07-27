@@ -163,6 +163,35 @@ class BrandLogoWidget(QWidget):
         painter.setPen(wave_pen)
         painter.drawPath(wave)
 
+class CircularProfileWidget(QWidget):
+    """Custom circular profile avatar widget with neon border"""
+    def __init__(self, image_path, size=46, parent=None):
+        super().__init__(parent)
+        self.size_px = size
+        self.setFixedSize(size, size)
+        self.pixmap = None
+        if os.path.exists(image_path):
+            self.pixmap = QPixmap(image_path)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Draw circular image clip
+        if self.pixmap and not self.pixmap.isNull():
+            path = QPainterPath()
+            path.addEllipse(2, 2, self.size_px - 4, self.size_px - 4)
+            painter.setClipPath(path)
+            scaled_pix = self.pixmap.scaled(self.size_px, self.size_px, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+            painter.drawPixmap(0, 0, scaled_pix)
+            painter.setClipping(False)
+
+        # Draw glowing outer border ring (#39FF14 Neon Green)
+        pen = QPen(QColor(57, 255, 20), 2)
+        painter.setPen(pen)
+        painter.setBrush(Qt.NoBrush)
+        painter.drawEllipse(1, 1, self.size_px - 2, self.size_px - 2)
+
 class MainUI(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -195,14 +224,16 @@ class MainUI(QMainWindow):
         self.test_start_time = None
         self.elapsed_timer = QTimer()
         self.elapsed_timer.timeout.connect(self.update_timer_display)
+        self.time_data = []
+        self.y_data = [[] for _ in range(8)]
         
         self.setup_ui()
         
         self.daq = DAQHandler()
-        self.logic_mon = LogicMonitor()
-        
         self.daq.data_ready.connect(self.on_data_ready)
         self.daq.error_occurred.connect(self.on_daq_error)
+        
+        self.logic_mon = LogicMonitor()
         self.logic_mon.log_event.connect(self.add_log)
         self.logic_mon.phase_changed.connect(self.update_phase_display)
         self.logic_mon.validation_status.connect(self.update_validation_display)
@@ -222,31 +253,48 @@ class MainUI(QMainWindow):
         header_layout.setContentsMargins(12, 8, 12, 8)
         header_layout.setSpacing(12)
         
-        # Official El Araby Company Logo on the left
+        # 1. Official El Araby Company Logo on the left
         logo_path = os.path.join(os.path.dirname(__file__), "screens", "Screenshot 2026-07-27 175755.png")
         if os.path.exists(logo_path):
             self.elaraby_logo = QLabel()
             pix = QPixmap(logo_path)
             if not pix.isNull():
-                self.elaraby_logo.setPixmap(pix.scaledToHeight(46, Qt.SmoothTransformation))
+                self.elaraby_logo.setPixmap(pix.scaledToHeight(44, Qt.SmoothTransformation))
                 self.elaraby_logo.setStyleSheet("border: 1px solid #0052CC; border-radius: 6px; padding: 2px; background-color: #0052CC;")
                 header_layout.addWidget(self.elaraby_logo)
         
+        # 2. App Title & Subtitle
         title_vbox = QVBoxLayout()
-        title_vbox.setSpacing(3)
-        
-        # Short Modern App Name
+        title_vbox.setSpacing(2)
         header_text = QLabel("SHARP HIL AUDITOR")
-        header_text.setStyleSheet("font-size: 22px; font-weight: 900; color: #FFFFFF; letter-spacing: 2px; border: none; font-family: 'Segoe UI', 'Arial';")
-        
-        # Developer Credit & Subtitle (Ziad Emad Allam prominent highlight)
-        sub_text = QLabel("DESIGNED & DEVELOPED BY <b style='color: #39FF14; font-size: 11px;'>ZIAD EMAD ALLAM</b>  |  EL ARABY R&D GROUP")
-        sub_text.setStyleSheet("font-size: 10px; font-weight: bold; color: #00D4FF; letter-spacing: 1.5px; border: none; font-family: 'Consolas', 'Segoe UI';")
-        
+        header_text.setStyleSheet("font-size: 20px; font-weight: 900; color: #FFFFFF; letter-spacing: 2px; border: none; font-family: 'Segoe UI', 'Arial';")
+        sub_text = QLabel("ENGINEERED FOR SHARP VE-BLDC  |  EL ARABY R&D GROUP")
+        sub_text.setStyleSheet("font-size: 10px; font-weight: bold; color: #00D4FF; letter-spacing: 1.2px; border: none; font-family: 'Consolas', 'Segoe UI';")
         title_vbox.addWidget(header_text)
         title_vbox.addWidget(sub_text)
-        
         header_layout.addLayout(title_vbox)
+        
+        # 3. Vertical Separator Line (|)
+        sep = QFrame()
+        sep.setFrameShape(QFrame.VLine)
+        sep.setStyleSheet("color: #2d3542; background-color: #2d3542; min-width: 2px; max-width: 2px; margin: 4px 10px;")
+        header_layout.addWidget(sep)
+        
+        # 4. Circular Avatar & Engineer Name Badge
+        profile_path = os.path.join(os.path.dirname(__file__), "screens", "Screenshot 2026-07-27 182228.png")
+        self.profile_avatar = CircularProfileWidget(profile_path, size=46)
+        header_layout.addWidget(self.profile_avatar)
+        
+        engineer_vbox = QVBoxLayout()
+        engineer_vbox.setSpacing(1)
+        eng_name = QLabel("ZIAD EMAD ALLAM")
+        eng_name.setStyleSheet("font-size: 13px; font-weight: 900; color: #39FF14; letter-spacing: 1px; border: none; font-family: 'Segoe UI';")
+        eng_title = QLabel("R&D SOFTWARE DEVELOPER")
+        eng_title.setStyleSheet("font-size: 9px; font-weight: bold; color: #8a99ad; letter-spacing: 1px; border: none; font-family: 'Consolas';")
+        engineer_vbox.addWidget(eng_name)
+        engineer_vbox.addWidget(eng_title)
+        header_layout.addLayout(engineer_vbox)
+        
         header_layout.addStretch()
         
         self.phase_label = QLabel("PHASE: IDLE")
