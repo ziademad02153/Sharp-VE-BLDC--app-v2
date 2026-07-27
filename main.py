@@ -164,11 +164,12 @@ class BrandLogoWidget(QWidget):
         painter.drawPath(wave)
 
 def find_image_file(target_name):
-    """Smart image locator checking multiple candidate folders and logging search results"""
+    """Smart image locator checking candidate folders, smart keyword fallbacks, and listing available files"""
     base_dir = os.path.abspath(os.path.dirname(__file__))
     cwd_dir = os.path.abspath(os.getcwd())
     
     clean_target = target_name.replace(".png", "").replace(".jpg", "").replace(".jpeg", "").strip()
+    is_logo_search = "175755" in target_name or "logo" in target_name.lower()
     
     candidate_dirs = [
         os.path.join(base_dir, "screens"),
@@ -180,22 +181,54 @@ def find_image_file(target_name):
         cwd_dir
     ]
     
+    all_found_images = []
+    
     for folder in candidate_dirs:
         if os.path.exists(folder) and os.path.isdir(folder):
             direct = os.path.join(folder, target_name)
             if os.path.exists(direct):
-                print(f"[IMAGE FOUND] Loaded exact match: {direct}")
+                print(f"[IMAGE FOUND] Exact match: {direct}")
                 return direct
             try:
-                for f in os.listdir(folder):
-                    if ("175755" in target_name and "175755" in f) or ("182228" in target_name and "182228" in f) or (clean_target.lower() in f.lower()):
+                files = os.listdir(folder)
+                for img in files:
+                    if img.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp')):
+                        full_p = os.path.join(folder, img)
+                        if full_p not in all_found_images:
+                            all_found_images.append(full_p)
+                
+                for f in files:
+                    if ("175755" in target_name and "175755" in f) or \
+                       ("182228" in target_name and "182228" in f) or \
+                       (clean_target.lower() in f.lower()):
                         found_path = os.path.join(folder, f)
-                        print(f"[IMAGE FOUND] Loaded flexible match: {found_path}")
+                        print(f"[IMAGE FOUND] Flexible match: {found_path}")
                         return found_path
             except Exception:
                 pass
 
-    print(f"[IMAGE WARNING] Could not locate image for '{target_name}' in candidate folders.")
+    if all_found_images:
+        print(f"[SCREENS DIRECTORY IMAGES]: {[os.path.basename(p) for p in all_found_images]}")
+        for p in all_found_images:
+            bname = os.path.basename(p).lower()
+            if is_logo_search and any(k in bname for k in ["175755", "logo", "araby", "elaraby", "brand", "screen"]):
+                print(f"[IMAGE FALLBACK] Selected logo image: {p}")
+                return p
+            elif not is_logo_search and any(k in bname for k in ["182228", "ziad", "profile", "avatar", "photo", "person", "man", "user"]):
+                print(f"[IMAGE FALLBACK] Selected avatar image: {p}")
+                return p
+        
+        if is_logo_search and len(all_found_images) >= 1:
+            print(f"[IMAGE FALLBACK] Selected candidate logo: {all_found_images[0]}")
+            return all_found_images[0]
+        elif not is_logo_search and len(all_found_images) >= 2:
+            print(f"[IMAGE FALLBACK] Selected candidate avatar: {all_found_images[1]}")
+            return all_found_images[1]
+        elif not is_logo_search and len(all_found_images) == 1:
+            print(f"[IMAGE FALLBACK] Selected candidate avatar: {all_found_images[0]}")
+            return all_found_images[0]
+
+    print(f"[IMAGE WARNING] No image files found in any folder for '{target_name}'.")
     return None
 
 class CircularProfileWidget(QWidget):
