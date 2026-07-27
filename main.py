@@ -163,15 +163,31 @@ class BrandLogoWidget(QWidget):
         painter.setPen(wave_pen)
         painter.drawPath(wave)
 
+def find_image_file(target_name):
+    """Smart image locator handling .png.png, extensions, case differences, and hidden Windows extensions"""
+    base_dir = os.path.dirname(__file__)
+    screens_dir = os.path.join(base_dir, "screens")
+    if not os.path.exists(screens_dir):
+        return None
+    direct = os.path.join(screens_dir, target_name)
+    if os.path.exists(direct):
+        return direct
+    clean_target = target_name.replace(".png", "").replace(".jpg", "").replace(".jpeg", "")
+    for f in os.listdir(screens_dir):
+        if clean_target in f:
+            return os.path.join(screens_dir, f)
+    return None
+
 class CircularProfileWidget(QWidget):
     """Custom circular profile avatar widget with neon border"""
-    def __init__(self, image_path, size=46, parent=None):
+    def __init__(self, image_name, size=46, parent=None):
         super().__init__(parent)
         self.size_px = size
         self.setFixedSize(size, size)
         self.pixmap = None
-        if os.path.exists(image_path):
-            self.pixmap = QPixmap(image_path)
+        img_path = find_image_file(image_name)
+        if img_path and os.path.exists(img_path):
+            self.pixmap = QPixmap(img_path)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -254,8 +270,8 @@ class MainUI(QMainWindow):
         header_layout.setSpacing(12)
         
         # 1. Official El Araby Company Logo on the left
-        logo_path = os.path.join(os.path.dirname(__file__), "screens", "Screenshot 2026-07-27 175755.png")
-        if os.path.exists(logo_path):
+        logo_path = find_image_file("Screenshot 2026-07-27 175755.png")
+        if logo_path and os.path.exists(logo_path):
             self.elaraby_logo = QLabel()
             pix = QPixmap(logo_path)
             if not pix.isNull():
@@ -281,8 +297,7 @@ class MainUI(QMainWindow):
         header_layout.addWidget(sep)
         
         # 4. Circular Avatar & Engineer Name Badge
-        profile_path = os.path.join(os.path.dirname(__file__), "screens", "Screenshot 2026-07-27 182228.png")
-        self.profile_avatar = CircularProfileWidget(profile_path, size=46)
+        self.profile_avatar = CircularProfileWidget("Screenshot 2026-07-27 182228.png", size=46)
         header_layout.addWidget(self.profile_avatar)
         
         engineer_vbox = QVBoxLayout()
