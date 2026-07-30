@@ -178,6 +178,30 @@ class ErrorMonitor(QObject):
                 if not getattr(self, 'softener_premature_logged', False):
                     self._trigger("SOFT-1", row_index, row_index, "Premature Softener Dispense: Valve opened before first drain (during wash).")
                     self.softener_premature_logged = True
+
+        # 8. Sharp V4 Spec: Hot Water Restrictions & High-Speed Spin Safety Rules
+        # Rule 8a: Hot Water Valve strictly prohibited during Rinse (Rinse is Cold Water Only per Table3)
+        if phase.startswith('RINSE') and hot:
+            if not getattr(self, 'hot_rinse_logged', False):
+                self._trigger("HOT-RINSE-VIOLATION", row_index - 10, row_index, 
+                              "Unauthorized Hot Water Fill: Hot water valve activated during Rinse phase. Sharp spec Table3 restricts Hot/Warm water to Wash phase only; all Rinse fills must be Cold Water Only.")
+                self.hot_rinse_logged = True
+        elif not phase.startswith('RINSE'):
+            self.hot_rinse_logged = False
+
+        # Rule 8b: Water Inlet Valves (Cold/Hot/Softener) strictly prohibited during High Speed Spin (>300 RPM)
+        if rpm > 300 and (cold or hot or softener):
+            if not getattr(self, 'valve_spin_logged', False):
+                active_valves = []
+                if cold: active_valves.append("Cold")
+                if hot: active_valves.append("Hot")
+                if softener: active_valves.append("Softener")
+                valve_str = "+".join(active_valves)
+                self._trigger("VALVE-SPIN-VIOLATION", row_index - 10, row_index, 
+                              f"Safety Violation: Water Inlet Valve ({valve_str}) activated during High Speed Spin ({rpm} RPM > 300 RPM limit).")
+                self.valve_spin_logged = True
+        elif rpm <= 300:
+            self.valve_spin_logged = False
                     
  
         # 6. Unbalance (E3-2)

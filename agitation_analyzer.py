@@ -425,10 +425,11 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
             "Technical_Evidence": f"Phase {name} successfully identified.\nStart Row: {start}\nEnd Row: {end}\nClock Duration: {dur_sec}s."
         })
 
-    # Append Phase Tracking
-    append_phase_tracking("M2", m2_start, m2_end, "60s (Active)")
-    append_phase_tracking("M3", m3_start, m3_end, "180s (Active)")
-    if mu_start: append_phase_tracking("MU", mu_start, mu_end, "N/A")
+    # Append Phase Tracking (Pre-Wash vs Main Wash)
+    append_phase_tracking("Pre-Wash M2", m2_start, m2_end, "60s (Active)")
+    append_phase_tracking("Pre-Wash M3", m3_start, m3_end, "180s (Active)")
+    if m4_start: append_phase_tracking("Main Wash M4", m4_start, m4_end, "720s+ (Active)")
+    if mu_start: append_phase_tracking("MU Untangle", mu_start, mu_end, "N/A")
 
     # ── 7. Per-stroke validation ───────────────────────────────────────────────
     def validate_movement(movement_strokes, phase_name, expected_specs):
@@ -878,37 +879,7 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
             
             prev_m_sec = m_sec
             
-        # --- 3. Free Fall Validation ---
-        spin_end_row = block["end"]
-        drop_start_row = spin_end_row
-        # Look back to find when the RPM was at 70% of max
-        while drop_start_row > block["start"]:
-            if rpm_lookup.get(drop_start_row, 0) > (expected_max_rpm * 0.7):
-                break
-            drop_start_row -= 1
-            
-        drop_duration_sec = (spin_end_row - drop_start_row) * 0.1
-        
-        if drop_duration_sec >= 10.0:
-            f_status = "PASS"
-            f_sev = "Low"
-            f_msg = f"RPM dropped from max to 0 in {drop_duration_sec:.1f}s. (Free-fall, >=10s)"
-        else:
-            f_status = "FAIL"
-            f_sev = "Medium"
-            f_msg = f"RPM dropped from max to 0 in only {drop_duration_sec:.1f}s. (Braking detected, <10s)"
-            
-        defects.append({
-            "Row_Index":          f"{drop_start_row}-{spin_end_row}",
-            "Test_Name":          f"{spin_name} - Free Fall Check",
-            "Status":             f_status,
-            "Severity":           f_sev,
-            "Priority":           "Medium",
-            "Expected_Sec":       ">= 10s",
-            "Actual_Sec":         f"{drop_duration_sec:.1f}s",
-            "Delta_Sec":          f"{drop_duration_sec - 10:.1f}s",
-            "Technical_Evidence": f_msg
-        })
+
 
     # Sort all defects chronologically based on the start row
     def get_start_row(defect):
