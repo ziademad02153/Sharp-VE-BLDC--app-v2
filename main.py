@@ -211,17 +211,10 @@ def find_image_file(target_name):
     if all_found_images:
         for p in all_found_images:
             bname = os.path.basename(p).lower()
-            if is_logo_search and any(k in bname for k in ["175755", "logo", "araby", "elaraby", "brand", "screen"]):
+            if is_logo_search and any(k in bname for k in ["175755", "logo", "elaraby", "araby"]):
                 return p
-            elif not is_logo_search and any(k in bname for k in ["182228", "ziad", "profile", "avatar", "photo", "person", "man", "user"]):
+            elif not is_logo_search and any(k in bname for k in ["182228", "ziad", "profile", "avatar"]):
                 return p
-        
-        if is_logo_search and len(all_found_images) >= 1:
-            return all_found_images[0]
-        elif not is_logo_search and len(all_found_images) >= 2:
-            return all_found_images[1]
-        elif not is_logo_search and len(all_found_images) == 1:
-            return all_found_images[0]
 
     return None
 
@@ -714,6 +707,11 @@ class MainUI(QMainWindow):
         self.add_log(f"DAQ ERROR: {err_msg}")
         if self.is_recording:
             self.stop_recording()
+        QMessageBox.critical(
+            self,
+            "DAQ Hardware Connection Error",
+            f"❌ DAQ Hardware Error!\n\n{err_msg}\n\nPlease verify that the NI-DAQ USB cable is securely connected to the laptop and powered ON."
+        )
 
     def start_recording(self):
         try:
