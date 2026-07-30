@@ -11,7 +11,26 @@ class DAQHandler(QObject):
         super().__init__()
         self.running = False
         self.task = None
-        self.channels = [
+        self.channels = self._discover_channels()
+
+    def _discover_channels(self):
+        """Auto-detects connected NI-DAQ device name (e.g. Dev1, cDAQ1Mod1, cDAQ1Mod2)"""
+        try:
+            import nidaqmx.system
+            system = nidaqmx.system.System.local()
+            devices = system.devices
+            if len(devices) > 0:
+                # Pick first active AI-capable device module
+                for dev in devices:
+                    dev_name = dev.name
+                    if "mod" in dev_name.lower() or "dev" in dev_name.lower():
+                        return [f"{dev_name}/ai{i}" for i in range(8)]
+                dev_name = devices[0].name
+                return [f"{dev_name}/ai{i}" for i in range(8)]
+        except Exception as e:
+            pass
+            
+        return [
             'cDAQ1Mod1/ai0', 'cDAQ1Mod1/ai1', 'cDAQ1Mod1/ai2', 'cDAQ1Mod1/ai3',
             'cDAQ1Mod1/ai4', 'cDAQ1Mod1/ai5', 'cDAQ1Mod1/ai6', 'cDAQ1Mod1/ai7'
         ]

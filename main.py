@@ -171,6 +171,7 @@ def find_image_file(target_name):
     clean_target = target_name.replace(".png", "").replace(".jpg", "").replace(".jpeg", "").strip()
     is_logo_search = "175755" in target_name or "logo" in target_name.lower()
     
+    user_home = os.path.expanduser("~")
     candidate_dirs = [
         os.path.join(base_dir, "screens"),
         os.path.join(base_dir, "Screens"),
@@ -178,7 +179,10 @@ def find_image_file(target_name):
         os.path.join(cwd_dir, "screens"),
         os.path.join(cwd_dir, "Screens"),
         base_dir,
-        cwd_dir
+        cwd_dir,
+        os.path.join(user_home, "Desktop"),
+        os.path.join(user_home, "Downloads"),
+        os.path.join(user_home, "Pictures")
     ]
     
     all_found_images = []
@@ -236,7 +240,7 @@ class CircularProfileWidget(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         
-        # Draw circular image clip
+        # Draw circular image clip if file exists, else render glowing ZE badge
         if self.pixmap and not self.pixmap.isNull():
             path = QPainterPath()
             path.addEllipse(2, 2, self.size_px - 4, self.size_px - 4)
@@ -244,6 +248,13 @@ class CircularProfileWidget(QWidget):
             scaled_pix = self.pixmap.scaled(self.size_px, self.size_px, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
             painter.drawPixmap(0, 0, scaled_pix)
             painter.setClipping(False)
+        else:
+            painter.setBrush(QBrush(QColor(15, 25, 20)))
+            painter.setPen(Qt.NoPen)
+            painter.drawEllipse(2, 2, self.size_px - 4, self.size_px - 4)
+            painter.setPen(QPen(QColor(57, 255, 20)))
+            painter.setFont(QFont("Consolas", 14, QFont.Bold))
+            painter.drawText(self.rect(), Qt.AlignCenter, "ZE")
 
         # Draw glowing outer border ring (#39FF14 Neon Green)
         pen = QPen(QColor(57, 255, 20), 2)
@@ -314,6 +325,7 @@ class MainUI(QMainWindow):
         
         # 1. Official El Araby Company Logo on the left
         logo_path = find_image_file("Screenshot 2026-07-27 175755.png")
+        loaded_logo = False
         if logo_path and os.path.exists(logo_path):
             self.elaraby_logo = QLabel()
             pix = QPixmap(logo_path)
@@ -321,6 +333,12 @@ class MainUI(QMainWindow):
                 self.elaraby_logo.setPixmap(pix.scaledToHeight(44, Qt.SmoothTransformation))
                 self.elaraby_logo.setStyleSheet("border: 1px solid #0052CC; border-radius: 6px; padding: 2px; background-color: #0052CC;")
                 header_layout.addWidget(self.elaraby_logo)
+                loaded_logo = True
+        
+        if not loaded_logo:
+            self.elaraby_logo = QLabel(" EL ARABY ")
+            self.elaraby_logo.setStyleSheet("font-size: 13px; font-weight: 900; color: #FFFFFF; background-color: #0052CC; border: 1.5px solid #00D4FF; border-radius: 6px; padding: 6px 10px; font-family: 'Segoe UI', sans-serif; letter-spacing: 1.5px;")
+            header_layout.addWidget(self.elaraby_logo)
         
         # 2. App Title & Subtitle
         title_vbox = QVBoxLayout()
@@ -698,22 +716,26 @@ class MainUI(QMainWindow):
             self.stop_recording()
 
     def start_recording(self):
-        self.is_recording = True
-        self.btn_start.setEnabled(False)
-        self.btn_stop.setEnabled(True)
-        self.raw_data_log.clear()
-        self.completed_phases.clear()
-        self.phase_counts.clear()
-        self.last_phase = "IDLE"
-        self.logic_mon.reset()
-        self.test_start_time = datetime.datetime.now()
-        self.elapsed_timer.start(1000)
-        self.time_data = []
-        self.y_data = [[] for _ in range(8)]
-        for curve in self.curves: curve.setData([], [])
-        self.add_log("System started...")
-        self.change_program(self.program_combo.currentText())
-        self.daq.start()
+        try:
+            self.is_recording = True
+            self.btn_start.setEnabled(False)
+            self.btn_stop.setEnabled(True)
+            self.raw_data_log.clear()
+            self.completed_phases.clear()
+            self.phase_counts.clear()
+            self.last_phase = "IDLE"
+            self.logic_mon.reset()
+            self.test_start_time = datetime.datetime.now()
+            self.elapsed_timer.start(1000)
+            self.time_data = []
+            self.y_data = [[] for _ in range(8)]
+            for curve in self.curves: curve.setData([], [])
+            self.add_log("System test started...")
+            self.change_program(self.program_combo.currentText())
+            self.daq.start()
+        except Exception as e:
+            self.add_log(f"CRITICAL START ERROR: {e}")
+            self.stop_recording()
 
     def stop_recording(self, triggered_by_ui=True):
         if self.is_recording:
