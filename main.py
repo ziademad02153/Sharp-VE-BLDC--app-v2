@@ -202,6 +202,7 @@ def find_image_file(target_name):
                 
                 for f in files:
                     if ("175755" in target_name and "175755" in f) or \
+                       ("141733" in target_name and "141733" in f) or \
                        ("182228" in target_name and "182228" in f) or \
                        (clean_target.lower() in f.lower()):
                         return os.path.join(folder, f)
@@ -213,7 +214,7 @@ def find_image_file(target_name):
             bname = os.path.basename(p).lower()
             if is_logo_search and any(k in bname for k in ["175755", "logo", "elaraby", "araby"]):
                 return p
-            elif not is_logo_search and any(k in bname for k in ["182228", "ziad", "profile", "avatar"]):
+            elif not is_logo_search and any(k in bname for k in ["141733", "182228", "ziad", "profile", "avatar"]):
                 return p
 
     return None
@@ -351,7 +352,7 @@ class MainUI(QMainWindow):
         header_layout.addWidget(sep)
         
         # 4. Circular Avatar & Engineer Name Badge
-        self.profile_avatar = CircularProfileWidget("Screenshot 2026-07-27 182228.png", size=46)
+        self.profile_avatar = CircularProfileWidget("Screenshot 2026-04-05 141733.png", size=46)
         header_layout.addWidget(self.profile_avatar)
         
         engineer_vbox = QVBoxLayout()

@@ -37,21 +37,49 @@ class DAQHandler(QObject):
 
     def start(self):
         self.running = True
-        try:
-            self.task = nidaqmx.Task()
-            for ch in self.channels:
-                self.task.ai_channels.add_ai_voltage_chan(ch)
+        
+        # Build intelligent candidate device channel lists
+        candidate_lists = []
+        discovered = self._discover_channels()
+        if discovered:
+            candidate_lists.append(discovered)
             
-            # 10,000 Hz Industrial Sampling Rate (Matches LabVIEW High-Speed standard)
-            self.task.timing.cfg_samp_clk_timing(
-                rate=10000.0,
-                sample_mode=nidaqmx.constants.AcquisitionType.CONTINUOUS
-            )
-            
-            self.thread = threading.Thread(target=self._daq_loop, daemon=True)
-            self.thread.start()
-        except Exception as e:
-            self.error_occurred.emit(f"Hardware Connection Error: {e}. Check USB or DAQ Chassis.")
+        # Add all standard NI-DAQ chassis module names (cDAQ2Mod1, cDAQ1Mod1, Dev1, cDAQ1Mod2)
+        for dev in ['cDAQ2Mod1', 'cDAQ1Mod1', 'cDAQ1Mod2', 'Dev1', 'cDAQ2Mod2']:
+            ch_list = [f"{dev}/ai{i}" for i in range(8)]
+            if ch_list not in candidate_lists:
+                candidate_lists.append(ch_list)
+
+        last_error = None
+        for ch_list in candidate_lists:
+            task = None
+            try:
+                task = nidaqmx.Task()
+                for ch in ch_list:
+                    task.ai_channels.add_ai_voltage_chan(ch)
+                
+                # 10,000 Hz Industrial Sampling Rate
+                task.timing.cfg_samp_clk_timing(
+                    rate=10000.0,
+                    sample_mode=nidaqmx.constants.AcquisitionType.CONTINUOUS
+                )
+                self.task = task
+                self.channels = ch_list
+                dev_connected = ch_list[0].split('/')[0]
+                print(f"[DAQHandler] Successfully connected to NI-DAQ module: {dev_connected}")
+                
+                self.thread = threading.Thread(target=self._daq_loop, daemon=True)
+                self.thread.start()
+                return
+            except Exception as e:
+                last_error = e
+                if task:
+                    try:
+                        task.close()
+                    except:
+                        pass
+
+        self.error_occurred.emit(f"Hardware Connection Error: {last_error}. Check USB or DAQ Chassis.")
 
     def stop(self):
         self.running = False
