@@ -900,14 +900,8 @@ class MainUI(QMainWindow):
         if self.log_list.count() > 500: self.log_list.takeItem(0)
 
     def handle_alarm(self, message):
-        # Auto-stop disabled per user request to ensure continuous recording
-        # if self.is_recording: self.stop_recording(auto_save=True) 
-        msg_box = QMessageBox(self)
-        msg_box.setIcon(QMessageBox.Critical)
-        msg_box.setWindowTitle("CRITICAL SYSTEM FAULT")
-        msg_box.setText(message)
-        msg_box.setStyleSheet("QMessageBox { background-color: #1a0000; color: white; } QLabel { color: #ff6666; }")
-        msg_box.exec_()
+        # Non-blocking alarm logging for hands-free test automation
+        self.add_log(f"CRITICAL ALARM: {message}", level="ERROR")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
