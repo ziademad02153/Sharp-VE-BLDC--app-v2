@@ -706,13 +706,15 @@ class MainUI(QMainWindow):
 
     def on_daq_error(self, err_msg):
         self.add_log(f"DAQ ERROR: {err_msg}")
+        was_rec = self.is_recording
         if self.is_recording:
             self.stop_recording()
-        QMessageBox.critical(
-            self,
-            "DAQ Hardware Connection Error",
-            f"❌ DAQ Hardware Error!\n\n{err_msg}\n\nPlease verify that the NI-DAQ USB cable is securely connected to the laptop and powered ON."
-        )
+        if not was_rec:
+            QMessageBox.critical(
+                self,
+                "DAQ Hardware Connection Error",
+                f"❌ DAQ Hardware Error!\n\n{err_msg}\n\nPlease verify that the NI-DAQ USB cable is securely connected to the laptop and powered ON."
+            )
 
     def start_recording(self):
         try:
