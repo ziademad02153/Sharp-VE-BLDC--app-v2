@@ -129,7 +129,7 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
     raw_strokes = [s for s in raw_strokes if not any(r[8] > 2.0 or r[6] > 2.0 for r in s)]
 
     if not raw_strokes:
-        return defects
+        return defects, {}
 
     # ── 3. Calibrate each stroke (ON time, OFF time, next_start_row) ──────────
     calibrated = []
@@ -357,12 +357,31 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
         if off_time is not None and off_time <= 5.0:
             active_wash_time += off_time
             
+        # Determine M2 and M3 subtotal cutoffs dynamically per V4 spec for ALL groups
+        is_lvl4 = (level_str in ["LEV-4", "4", "11_13"])
+        is_grp1 = (course_group == "Group 1" or program_name in COURSE_GROUPS.get("Group 1", []))
+        is_grp2 = (course_group == "Group 2" or program_name in COURSE_GROUPS.get("Group 2", []))
+        is_grp3 = (course_group == "Group 3" or program_name in COURSE_GROUPS.get("Group 3", []))
+
+        if is_grp1:
+            m2_limit = 360.0 if is_lvl4 else 60.0
+            m3_limit = m2_limit + (720.0 if is_lvl4 else 120.0)
+        elif is_grp2:
+            m2_limit = 60.0
+            m3_limit = m2_limit + 180.0
+        elif is_grp3:
+            m2_limit = 60.0
+            m3_limit = m2_limit + 180.0
+        else:
+            m2_limit = 60.0
+            m3_limit = 240.0
+
         # Classify based on active wash time for M2 and M3
-        if active_wash_time <= 60.0:
+        if active_wash_time <= m2_limit:
             m2.append(s)
             if not m2_start: m2_start = s["start_row"]
             m2_end = s["end_row"]
-        elif active_wash_time <= 240.0:
+        elif active_wash_time <= m3_limit:
             m3.append(s)
             if not m3_start: m3_start = s["start_row"]
             m3_end = s["end_row"]

@@ -1,8 +1,8 @@
 {
     "meta": {
-        "source_file": "Sharp VE BLDC 11,13kg V0.xlsx",
+        "source_file": "Sharp VE BLDC 11,13kg V4.xlsx",
         "model": "Sharp VE BLDC 11/13 kg",
-        "built_at": "2026-04-20 00:35:13.814211",
+        "built_at": "2026-08-04 17:30:00.000000 V4 Master Release",
         "total_programs": 12
     },
     "programs": {

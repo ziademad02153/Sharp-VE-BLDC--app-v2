@@ -32,8 +32,10 @@ class ExcelExporter:
 
         columns_raw = [
             "Row_Index", "H", "Min", "Sec", "ms", "Motor_RPM", "Cold_V", "Hot_V",
-            "Softener", "GearMotor", "Motor_V", "Pump", "Door"
+            "Softener", "Pump", "Motor_V", "GearMotor"
         ]
+        if len(transformed_raw) > 0 and len(transformed_raw[0]) == 13:
+            columns_raw.append("Door")
         df_raw     = pd.DataFrame(transformed_raw, columns=columns_raw)
         # ── Merge and filter defects ──────────────────────────────────────────
         defects = []
