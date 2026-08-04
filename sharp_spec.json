@@ -91,7 +91,7 @@
                 "final_spin_sec": 300
             },
             "LEV-4": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 1800,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 360,
@@ -205,7 +205,7 @@
                 "final_spin_sec": 300
             },
             "LEV-4": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 1800,
                 "rinse_count": 3,
                 "drain_sec": 120,
                 "water_fill_sec": 360,
