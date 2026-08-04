@@ -358,10 +358,11 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
             active_wash_time += off_time
             
         # Determine M2 and M3 subtotal cutoffs dynamically per V4 spec for ALL groups
-        is_lvl4 = (level_str in ["LEV-4", "4", "11_13"])
-        is_grp1 = (course_group == "Group 1" or program_name in COURSE_GROUPS.get("Group 1", []))
-        is_grp2 = (course_group == "Group 2" or program_name in COURSE_GROUPS.get("Group 2", []))
-        is_grp3 = (course_group == "Group 3" or program_name in COURSE_GROUPS.get("Group 3", []))
+        is_lvl4 = (level_str in ["LEV-4", "4", "11_13"] or level_key == "4")
+        cg_clean = str(course_group).replace(" ", "")
+        is_grp1 = (cg_clean == "Group1" or program_name in COURSE_GROUPS.get("Group 1", []))
+        is_grp2 = (cg_clean == "Group2" or program_name in COURSE_GROUPS.get("Group 2", []))
+        is_grp3 = (cg_clean == "Group3" or program_name in COURSE_GROUPS.get("Group 3", []))
 
         if is_grp1:
             m2_limit = 360.0 if is_lvl4 else 60.0
