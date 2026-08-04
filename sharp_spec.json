@@ -64,7 +64,7 @@
     "sequence_chart": {
         "Regular": {
             "LEV-1": {
-                "main_wash_sec": 180,
+                "main_wash_sec": 720,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 180,
@@ -91,7 +91,7 @@
                 "final_spin_sec": 300
             },
             "LEV-4": {
-                "main_wash_sec": 1800,
+                "main_wash_sec": 720,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 360,
@@ -149,7 +149,7 @@
                 "final_spin_sec": 540
             },
             "LEV-2": {
-                "main_wash_sec": 1080,
+                "main_wash_sec": 720,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 240,
@@ -158,7 +158,7 @@
                 "final_spin_sec": 540
             },
             "LEV-3": {
-                "main_wash_sec": 1080,
+                "main_wash_sec": 720,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 300,
@@ -167,7 +167,7 @@
                 "final_spin_sec": 540
             },
             "LEV-4": {
-                "main_wash_sec": 1080,
+                "main_wash_sec": 720,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 360,
@@ -205,7 +205,7 @@
                 "final_spin_sec": 300
             },
             "LEV-4": {
-                "main_wash_sec": 1800,
+                "main_wash_sec": 720,
                 "rinse_count": 3,
                 "drain_sec": 120,
                 "water_fill_sec": 360,
@@ -216,7 +216,7 @@
         },
         "Cotton": {
             "LEV-1": {
-                "main_wash_sec": 1080,
+                "main_wash_sec": 720,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 180,
@@ -225,7 +225,7 @@
                 "final_spin_sec": 300
             },
             "LEV-2": {
-                "main_wash_sec": 1080,
+                "main_wash_sec": 720,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 240,
@@ -234,7 +234,7 @@
                 "final_spin_sec": 300
             },
             "LEV-3": {
-                "main_wash_sec": 1080,
+                "main_wash_sec": 720,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 300,
@@ -243,7 +243,7 @@
                 "final_spin_sec": 300
             },
             "LEV-4": {
-                "main_wash_sec": 1080,
+                "main_wash_sec": 720,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 360,
@@ -294,7 +294,7 @@
         },
         "Jeans": {
             "LEV-1": {
-                "main_wash_sec": 1080,
+                "main_wash_sec": 720,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 180,
@@ -303,7 +303,7 @@
                 "final_spin_sec": 300
             },
             "LEV-2": {
-                "main_wash_sec": 1080,
+                "main_wash_sec": 720,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 240,
@@ -312,7 +312,7 @@
                 "final_spin_sec": 300
             },
             "LEV-3": {
-                "main_wash_sec": 1080,
+                "main_wash_sec": 720,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 300,
@@ -321,7 +321,7 @@
                 "final_spin_sec": 300
             },
             "LEV-4": {
-                "main_wash_sec": 1080,
+                "main_wash_sec": 720,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 360,
@@ -814,7 +814,7 @@
     "weight_detection": {
         "mechanism": "RPM sensor",
         "start_direction": "CCW first",
-        "sequence": "CCW_ON \u2192 CCW_OFF \u2192 CW_ON \u2192 CW_OFF (repeated 4 times)",
+        "sequence": "CCW_ON → CCW_OFF → CW_ON → CW_OFF (repeated 4 times)",
         "cw_on_ms": 300,
         "cw_off_ms": 600,
         "ccw_on_ms": 300,
@@ -1181,7 +1181,7 @@
                 "top_rpm": 70,
                 "ramp_rpm_per_sec": 10,
                 "after_stop": "shift to next process (MAX 30s)",
-                "then": "Drain Water \u2192 reset water level"
+                "then": "Drain Water → reset water level"
             },
             "2nd_spin": {
                 "top_rpm": 700,
