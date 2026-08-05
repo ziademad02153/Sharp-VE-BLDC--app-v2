@@ -22,6 +22,7 @@ class LogicMonitor(QObject):
         self.row_index = 0
         self.history = []
         self.analysis_summary = []
+        self.rpm_history = []
         
         # Spin Curve State Machine
         self.spin_timer = 0
@@ -40,6 +41,14 @@ class LogicMonitor(QObject):
         self.weight_detect_timer = 0
         self.drain_count = 0
         self.was_draining = False
+        self.expected_rinse_count = 2
+        
+        # Debounce Timers
+        self.pump_off_timer = 0
+        self.pump_on_timer = 0
+        self.rpm_zero_timer = 0
+        self.valve_on_timer = 0
+        self.softener_on_timer = 0
         
         self.error_monitor = ErrorMonitor(self.log_event.emit, self._record_result_proxy)
         self.sequence_validator = SequenceValidator(self.log_event.emit, self._record_result_proxy)
@@ -67,6 +76,24 @@ class LogicMonitor(QObject):
         ]
         self.current_program = ui_program_name if ui_program_name in valid_programs else "Regular"
         self.current_level = level
+        
+        self.expected_rinse_count = 2
+        try:
+            import json, os
+            spec_path = os.path.join(os.path.dirname(__file__), "sharp_spec.json")
+            with open(spec_path, "r", encoding="utf-8") as f:
+                spec_data = json.load(f)
+                lvl_key = level if "LEV-" in level else f"LEV-{level.replace('LEV-', '').strip()}"
+                self.expected_rinse_count = spec_data.get("sequence_chart", {}).get(self.current_program, {}).get(lvl_key, {}).get("rinse_count", 2)
+        except:
+            pass
+            
+        if rinse_override != "Default":
+            try:
+                self.expected_rinse_count = int(rinse_override.split(" ")[0])
+            except:
+                pass
+                
         self.log_event.emit(f"Program set to {self.current_program} ({level}) - Soak: {soak_option} - Delay: {delay_option}")
         self.sequence_validator.set_program(self.current_program, level, soak_option, delay_option, wash_override, rinse_override, spin_override)
         
@@ -74,6 +101,12 @@ class LogicMonitor(QObject):
         try:
             self.row_index += 1
             motor_rpm, cold, hot, softener, gearmotor, motor_v, pump, door = data[2:]
+            
+            self.rpm_history.append(motor_rpm)
+            if len(self.rpm_history) > 5: 
+                self.rpm_history.pop(0)
+            # Use Median Filter instead of Average to completely reject 1-tick massive DAQ spikes
+            smoothed_rpm = sorted(self.rpm_history)[len(self.rpm_history) // 2]
             
             pump_on = pump > self.VOLTAGE_THRESHOLD
             gearmotor_on = gearmotor > self.VOLTAGE_THRESHOLD
@@ -85,7 +118,7 @@ class LogicMonitor(QObject):
             
             # 1. Detection of Machine Start
             if not self.monitoring_active:
-                if (motor_rpm > 10 or pump_on or gearmotor_on or cold_on or hot_on):
+                if (smoothed_rpm > 10 or pump_on or gearmotor_on or cold_on or hot_on):
                     self.monitoring_active = True
                     self.log_event.emit("System activity detected. Validation engine is now ACTIVE.")
                 else:
@@ -101,7 +134,7 @@ class LogicMonitor(QObject):
                 "hot_on": hot_on,
                 "softener_on": softener_on,
                 "motor_v_on": motor_v_on,
-                "rpm": motor_rpm,
+                "rpm": smoothed_rpm,
                 "phase": self.current_phase,
                 "drain_count": self.drain_count
             }
@@ -112,7 +145,7 @@ class LogicMonitor(QObject):
             if len(self.history) > 1000: self.history.pop(0)
 
             # High-Precision Spin Logic
-            self._monitor_spin_curve(motor_rpm)
+            self._monitor_spin_curve(smoothed_rpm)
             
             # Fault detection
             self.error_monitor.evaluate_state(self.row_index, state, self.history)
@@ -137,19 +170,44 @@ class LogicMonitor(QObject):
         rpm = state['rpm']
         softener = state.get('softener_on', False)
         
+        # Hardware Debounce Counters
+        if not (pump or gear):
+            self.pump_off_timer += 1
+            self.pump_on_timer = 0
+        else:
+            self.pump_on_timer += 1
+            self.pump_off_timer = 0
+            
+        if cold or hot or softener:
+            self.valve_on_timer += 1
+        else:
+            self.valve_on_timer = 0
+            
+        if softener:
+            self.softener_on_timer += 1
+        else:
+            self.softener_on_timer = 0
+            
+        if rpm < 5:
+            self.rpm_zero_timer += 1
+        else:
+            self.rpm_zero_timer = 0
+        
         # Detect transition from DRAIN or SPIN to next phase
-        if old_phase in ['DRAIN', 'SPIN'] and not (pump or gear):
+        # Requires 2 seconds (20 ticks) of confirmed Pump/Gear OFF to prevent relay noise from double-counting drains
+        if old_phase in ['DRAIN', 'SPIN'] and self.pump_off_timer > 20:
             if not self.was_draining: # Transition edge
                 self.drain_count += 1
                 self.has_filled = False # Reset fill status for next cycle (Rinse)
                 self.was_draining = True
-        else:
+        elif self.pump_on_timer > 5:
             self.was_draining = False
 
         if not (pump or gear):
             self.spin_decel_timer = 0
 
-        if pump or gear:
+        # Require 5 ticks (500ms) of pump/gear to switch to DRAIN/SPIN to avoid spike switching
+        if self.pump_on_timer > 5:
             if rpm > 40:
                 self.current_phase = 'SPIN'
                 self.spin_decel_timer = 0
@@ -162,17 +220,20 @@ class LogicMonitor(QObject):
                         self.current_phase = 'SPIN'
                 else:
                     self.current_phase = 'DRAIN'
-        elif cold or hot or softener:
+        elif self.valve_on_timer > 5: # Require 500ms of valve to declare WATER_FILL
             if old_phase not in ['WASH'] and not old_phase.startswith('RINSE'):
                 self.current_phase = 'WATER_FILL'
                 self.has_filled = True
-        elif old_phase == 'SPIN' and rpm > 5:
+        elif old_phase == 'SPIN' and self.rpm_zero_timer < 50: # Allow 5 seconds of zero RPM before dropping SPIN
             # Coasting/Deceleration period of SPIN: retain SPIN
             self.current_phase = 'SPIN'
         elif rpm > 5:
-            if self.has_filled:
-                # Logic: If softener was used, or we drained once, it's RINSE
-                if softener or self.drain_count > 0:
+            if self.drain_count > self.expected_rinse_count:
+                self.current_phase = 'ANTI_WRINKLE'
+            elif self.has_filled:
+                # Logic: If softener was used, we drained once, or it's Quick Rinse, it's RINSE
+                # Debounce softener to prevent 1-tick DAQ noise from causing phase flicker (WASH -> RINSE -> WASH)
+                if (self.softener_on_timer > 5) or self.drain_count > 0 or self.current_program == "Quick Rinse":
                     # Map to RINSE_1, RINSE_2 etc for validator matching
                     rinse_num = max(1, self.drain_count)
                     self.current_phase = f'RINSE_{rinse_num}'
@@ -269,6 +330,7 @@ class LogicMonitor(QObject):
         self.row_index = 0
         self.history.clear()
         self.analysis_summary.clear()
+        self.rpm_history.clear()
         self.spin_state = "IDLE"
         self.spin_timer = 0
         self.spin_decel_timer = 0
@@ -277,6 +339,14 @@ class LogicMonitor(QObject):
         self.has_filled = False
         self._prev_pump = False
         self.monitoring_active = False
+        
+        # Reset Debounce Timers
+        self.pump_off_timer = 0
+        self.pump_on_timer = 0
+        self.rpm_zero_timer = 0
+        self.valve_on_timer = 0
+        self.softener_on_timer = 0
+        
         self.error_monitor.reset_timers()
         self.sequence_validator.reset()
         self.spin_logic_status.emit("IDLE", "#9E9E9E")

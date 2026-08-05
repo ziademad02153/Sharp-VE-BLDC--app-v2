@@ -64,7 +64,7 @@
     "sequence_chart": {
         "Regular": {
             "LEV-1": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 180,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 180,
@@ -140,7 +140,7 @@
         },
         "Heavy": {
             "LEV-1": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 180,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 180,
@@ -149,7 +149,7 @@
                 "final_spin_sec": 540
             },
             "LEV-2": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 1080,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 240,
@@ -158,7 +158,7 @@
                 "final_spin_sec": 540
             },
             "LEV-3": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 1080,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 300,
@@ -167,7 +167,7 @@
                 "final_spin_sec": 540
             },
             "LEV-4": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 1080,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 360,
@@ -178,7 +178,7 @@
         },
         "Baby Care": {
             "LEV-1": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 180,
                 "rinse_count": 3,
                 "drain_sec": 120,
                 "water_fill_sec": 180,
@@ -216,7 +216,7 @@
         },
         "Cotton": {
             "LEV-1": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 180,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 180,
@@ -225,7 +225,7 @@
                 "final_spin_sec": 300
             },
             "LEV-2": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 1080,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 240,
@@ -234,7 +234,7 @@
                 "final_spin_sec": 300
             },
             "LEV-3": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 1080,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 300,
@@ -243,7 +243,7 @@
                 "final_spin_sec": 300
             },
             "LEV-4": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 1080,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 360,
@@ -294,7 +294,7 @@
         },
         "Jeans": {
             "LEV-1": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 180,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 180,
@@ -303,7 +303,7 @@
                 "final_spin_sec": 300
             },
             "LEV-2": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 1080,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 240,
@@ -312,7 +312,7 @@
                 "final_spin_sec": 300
             },
             "LEV-3": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 1080,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 300,
@@ -321,7 +321,7 @@
                 "final_spin_sec": 300
             },
             "LEV-4": {
-                "main_wash_sec": 720,
+                "main_wash_sec": 1080,
                 "rinse_count": 2,
                 "drain_sec": 120,
                 "water_fill_sec": 360,

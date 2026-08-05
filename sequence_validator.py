@@ -141,7 +141,7 @@ class SequenceValidator(QObject):
 
         # 6. Anti-Wrinkle Exceptions
         # Cancelled for: Quick, Delicates, Wool, Tub Clean
-        no_aw_courses = ["Quick", "Delicates", "Sports Wear", "Tub Clean"]
+        no_aw_courses = ["Quick", "Delicates", "Wool", "Sports Wear", "Tub Clean"]
         if final_spin_val > 0 and program_name not in no_aw_courses:
             self.expected_phases.append({"name": "ANTI_WRINKLE", "duration_sec": 120, "type": "max_limit"})
 
@@ -229,8 +229,9 @@ class SequenceValidator(QObject):
         # Tracking Time (1 tick = 100ms)
         is_soak_state = expected_phase_name == "SOAK" and actual_phase in ["IDLE", "WATER_FILL", "WASH"]
         is_delay_state = expected_phase_name == "DELAY_START" and actual_phase == "IDLE"
+        is_spin_pause_state = expected_phase_name == "SPIN_PAUSE" and actual_phase == "IDLE"
         
-        if actual_phase == expected_phase_name or is_soak_state or is_delay_state:
+        if actual_phase == expected_phase_name or is_soak_state or is_delay_state or is_spin_pause_state:
             if self.time_in_current_phase == 0 or getattr(self, 'phase_start_row', None) is None:
                 self.phase_start_row = row_index
             self.time_in_current_phase += 1
@@ -239,6 +240,44 @@ class SequenceValidator(QObject):
         
         # Advance SOAK phase purely by time since it's a composite phase
         if is_soak_state:
+            target_time = expected_step["duration_sec"]
+            is_4h_soak = target_time == 14400
+            pause_target = 540 if is_4h_soak else 240 # 9 mins (540s) for 4H soak, 4 mins (240s) otherwise
+            
+            if actual_phase == "WASH":
+                if not getattr(self, 'soak_was_washing', False):
+                    # Transition IDLE -> WASH (Validate previous pause)
+                    idle_sec = self.soak_idle_timer / 10.0
+                    if idle_sec > 10: # Ignore tiny pauses
+                        if abs(idle_sec - pause_target) > 20.0:
+                            self._trigger_fail(f"Soak Cycle Pause", pause_target, idle_sec, f"{row_index-self.soak_idle_timer}-{row_index}")
+                        else:
+                            self._record_pass("Soak Cycle Pause", pause_target, idle_sec, f"{row_index-self.soak_idle_timer}-{row_index}")
+                    self.soak_was_washing = True
+                    self.soak_idle_timer = 0
+                self.soak_wash_timer += 1
+            else:
+                if getattr(self, 'soak_was_washing', False):
+                    # Transition WASH -> IDLE (Validate previous wash)
+                    wash_sec = self.soak_wash_timer / 10.0
+                    if abs(wash_sec - 60) > 10.0:
+                        self._trigger_fail(f"Soak Cycle Wash", 60, wash_sec, f"{row_index-self.soak_wash_timer}-{row_index}")
+                    else:
+                        self._record_pass("Soak Cycle Wash", 60, wash_sec, f"{row_index-self.soak_wash_timer}-{row_index}")
+                    self.soak_was_washing = False
+                    self.soak_wash_timer = 0
+                self.soak_idle_timer += 1
+                
+            if time_sec >= target_time:
+                self._record_pass(expected_phase_name, target_time, time_sec, f"{self.phase_start_row}-{row_index}")
+                self.current_step_index += 1
+                self.time_in_current_phase = 0
+                self.phase_start_row = None
+                self.TOLERANCE_SEC = 2.0
+                self.last_phase = actual_phase
+                self._emit_status()
+                return
+        elif is_delay_state or is_spin_pause_state:
             target_time = expected_step["duration_sec"]
             if time_sec >= target_time:
                 self._record_pass(expected_phase_name, target_time, time_sec, f"{self.phase_start_row}-{row_index}")
@@ -296,22 +335,50 @@ class SequenceValidator(QObject):
         self.log_callback(msg)
         self.record_callback(f"Phase Validator: {phase}", "PASS", msg, expected_time, actual_time, row_range)
 
-    def finalize(self, row_index):
+    def finalize(self, last_row_index):
+        """Called at the end of the telemetry file to evaluate the final phase and mark missing phases."""
         if not self.expected_phases: return
         
-        # Log the current phase if it was interrupted
-        if getattr(self, 'phase_start_row', None) is not None and self.current_step_index < len(self.expected_phases):
+        # Evaluate the current phase if it's the last one we reached
+        if self.current_step_index < len(self.expected_phases):
             expected_step = self.expected_phases[self.current_step_index]
-            time_sec = self.time_in_current_phase / 10.0
-            self._trigger_fail(f"Phase '{expected_step['name']}' interrupted early at {time_sec:.1f}s", expected_step["duration_sec"], time_sec, f"{self.phase_start_row}-{row_index}")
+            expected_phase_name = expected_step["name"]
+            
+            if getattr(self, 'last_phase', None) == expected_phase_name:
+                target_time = expected_step["duration_sec"]
+                time_sec = self.time_in_current_phase / 10.0
+                row_range = f"{self.phase_start_row}-{last_row_index}"
+                
+                # Use the stored limit fail flag if it was triggered
+                if getattr(self, '_limit_fail_triggered', False):
+                    if expected_step["type"] == "strict":
+                        self._trigger_fail(f"Phase '{expected_phase_name}' took {time_sec:.1f}s, expected {target_time}s", target_time, time_sec, row_range)
+                    elif expected_step["type"] == "max_limit":
+                        self._trigger_fail(f"Phase '{expected_phase_name}' took {time_sec:.1f}s, max {target_time}s", target_time, time_sec, row_range)
+                else:
+                    # Normal evaluation for the final phase
+                    if expected_step["type"] == "strict" and abs(time_sec - target_time) > self.TOLERANCE_SEC:
+                        self._trigger_fail(f"Phase '{expected_phase_name}' took {time_sec:.1f}s, expected {target_time}s", target_time, time_sec, row_range)
+                    elif expected_step["type"] == "max_limit" and time_sec > target_time + self.TOLERANCE_SEC:
+                        self._trigger_fail(f"Phase '{expected_phase_name}' took {time_sec:.1f}s, max {target_time}s", target_time, time_sec, row_range)
+                    else:
+                        self._record_pass(expected_phase_name, target_time, time_sec, row_range)
+            else:
+                # The phase was interrupted or didn't finish normally
+                time_sec = self.time_in_current_phase / 10.0
+                start_row = getattr(self, 'phase_start_row', None)
+                row_range = f"{start_row}-{last_row_index}" if start_row else f"{last_row_index}-{last_row_index}"
+                self._trigger_fail(f"Phase '{expected_step['name']}' interrupted early at {time_sec:.1f}s", expected_step["duration_sec"], time_sec, row_range)
+            
             self.current_step_index += 1
 
-        # Mark remaining phases as missing
+        # Mark any remaining phases as missing
         for i in range(self.current_step_index, len(self.expected_phases)):
             step = self.expected_phases[i]
             msg = f"❌ MISSING: Phase '{step['name']}' was not reached in the recording."
             self.log_callback(msg)
-            self.record_callback(f"Phase Validator: {step['name']}", "MISSING", msg, step["duration_sec"], 0, "N/A")
+            # Pass the last_row_index instead of N/A so the user knows where the file ended
+            self.record_callback(f"Phase Validator: {step['name']}", "MISSING", msg, step["duration_sec"], 0, f"{last_row_index}-{last_row_index}")
 
     def _emit_status(self):
         if not self.expected_phases or self.current_step_index >= len(self.expected_phases):
@@ -330,34 +397,6 @@ class SequenceValidator(QObject):
                 "status": "FAIL" if self.is_failed else "RUNNING"
             }
         self.validation_status.emit(status)
-
-    def finalize(self, last_row_index):
-        """Called at the end of the telemetry file to evaluate the final phase."""
-        if not self.expected_phases or self.current_step_index >= len(self.expected_phases):
-            return
-            
-        expected_step = self.expected_phases[self.current_step_index]
-        expected_phase_name = expected_step["name"]
-        
-        if self.last_phase == expected_phase_name:
-            target_time = expected_step["duration_sec"]
-            time_sec = self.time_in_current_phase / 10.0
-            row_range = f"{self.phase_start_row}-{last_row_index}"
-            
-            # Use the stored limit fail flag if it was triggered
-            if getattr(self, '_limit_fail_triggered', False):
-                if expected_step["type"] == "strict":
-                    self._trigger_fail(f"Phase '{expected_phase_name}' took {time_sec:.1f}s, expected {target_time}s", target_time, time_sec, row_range)
-                elif expected_step["type"] == "max_limit":
-                    self._trigger_fail(f"Phase '{expected_phase_name}' took {time_sec:.1f}s, max {target_time}s", target_time, time_sec, row_range)
-            else:
-                # Normal evaluation for the final phase
-                if expected_step["type"] == "strict" and abs(time_sec - target_time) > self.TOLERANCE_SEC:
-                    self._trigger_fail(f"Phase '{expected_phase_name}' took {time_sec:.1f}s, expected {target_time}s", target_time, time_sec, row_range)
-                elif expected_step["type"] == "max_limit" and time_sec > target_time + self.TOLERANCE_SEC:
-                    self._trigger_fail(f"Phase '{expected_phase_name}' took {time_sec:.1f}s, max {target_time}s", target_time, time_sec, row_range)
-                else:
-                    self._record_pass(expected_phase_name, target_time, time_sec, row_range)
 
     def reset(self):
         self.current_step_index = 0
