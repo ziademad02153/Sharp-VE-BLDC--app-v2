@@ -84,9 +84,9 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
         elif isinstance(level_str, str):
             level_key = level_str.replace("LEV-", "").strip()
 
-        spec_set = TIMINGS.get(course_group, TIMINGS["Group1"]).get(
+        spec_set = dict(TIMINGS.get(course_group, TIMINGS["Group1"]).get(
             level_key, TIMINGS["Group1"]["2"]
-        )
+        ))
 
     # Load dynamic sequence variables from sharp_spec.json
     import json
@@ -115,18 +115,34 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
     # ── 2. Split raw data into motor-active strokes ───────────────────────────
     raw_strokes = []
     current = []
+    dropout_count = 0
     for row in raw_data_log:
         if row[7] > 2.0:  # Use Motor_V (row[7]) instead of RPM
+            if dropout_count > 0 and current:
+                pass # Recovered from dropout
             current.append(row)
+            dropout_count = 0
         else:
             if current:
-                raw_strokes.append(current)
-                current = []
+                dropout_count += 1
+                if dropout_count < 3: # Tolerate 2 ticks (200ms) of DAQ voltage drop
+                    current.append(row)
+                else:
+                    current = current[:-2] # Remove the 2 dropout ticks we speculatively appended
+                    if current: raw_strokes.append(current)
+                    current = []
+                    dropout_count = 0
     if current:
         raw_strokes.append(current)
 
     # Remove SPIN/DRAIN strokes (pump or gearmotor voltage > 2 V)
-    raw_strokes = [s for s in raw_strokes if not any(r[8] > 2.0 or r[6] > 2.0 for r in s)]
+    # Require at least 3 ticks (300ms) of pump/gear to delete the stroke (ignore 1-tick spikes)
+    filtered_raw = []
+    for s in raw_strokes:
+        pump_gear_ticks = sum(1 for r in s if r[8] > 2.0 or r[6] > 2.0)
+        if pump_gear_ticks < 3:
+            filtered_raw.append(s)
+    raw_strokes = filtered_raw
 
     if not raw_strokes:
         return defects, {}
@@ -137,6 +153,7 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
         start_row   = stroke[0][0]
         end_row     = stroke[-1][0]
         peak_v      = max(r[7] for r in stroke)
+        peak_rpm    = max(r[2] for r in stroke)
 
         # Ignore tiny noise blips
         if peak_v < 2.0:
@@ -154,13 +171,14 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
             "on_rows":        on_rows,
             "elec_on":        elec_on,
             "is_water_active": (cold_avg > 1.0 or hot_avg > 1.0),
-            "peak_v":         peak_v
+            "peak_v":         peak_v,
+            "peak_rpm":       peak_rpm
         })
 
     # ── 4. Noise filter ───────────────────────────────────────────────────────
     filtered = []
     for idx, s in enumerate(calibrated):
-        if s["elec_on"] < 0.25 or s["peak_v"] < 2.0:
+        if s["elec_on"] < 0.15 or s["peak_v"] < 2.0:
             continue
         filtered.append(s)
 
@@ -174,22 +192,81 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
 
     calibrated = filtered
 
-    # ── 5. Water Fill Duration + E5 Detection ─────────────────────────────────
+    # ── 4a. Find First Water Fill ──────────────────────────────────────────────
     first_fill_row = None
     fill_end_row   = None
-
-    debounce_count = 0
+    debounce_end = 0
+    debounce_start = 0
     for r in raw_data_log:
-        if first_fill_row is None and (r[3] > 4.0 or r[4] > 4.0):
-            first_fill_row = r[0]
+        if first_fill_row is None:
+            if (r[3] > 4.0 or r[4] > 4.0):
+                debounce_start += 1
+                if debounce_start >= 5: # 500ms debounce to prevent 1-tick valve noise from ending Weight Detect early
+                    first_fill_row = r[0] - 4
+            else:
+                debounce_start = 0
+                
         if first_fill_row and fill_end_row is None:
             if r[3] < 2.0 and r[4] < 2.0:
-                debounce_count += 1
-                if debounce_count >= 20:
+                debounce_end += 1
+                if debounce_end >= 20:
                     fill_end_row = r[0] - 20
                     break
             else:
-                debounce_count = 0
+                debounce_end = 0
+
+    # ── 4b. Weight Detection Validation ─────────────────────────────────────────
+    wd_limit = first_fill_row if first_fill_row else float('inf')
+    wd_strokes = [s for s in calibrated if s["end_row"] < wd_limit]
+    
+    if wd_strokes:
+        wd_on_times = [s["elec_on"] for s in wd_strokes]
+        wd_off_times = [s["elec_off"] for s in wd_strokes if s["elec_off"] is not None]
+        max_rpm = max(s["peak_rpm"] for s in wd_strokes)
+        
+        # Check pulse counts (Expected: 8 pulses - 4 CW, 4 CCW)
+        if len(wd_strokes) != 8:
+            defects.append({
+                "Row_Index": f"{wd_strokes[0]['start_row']}-{wd_strokes[-1]['end_row']}",
+                "Test_Name": "Weight Detection Pulses",
+                "Status": "FAIL", "Severity": "High", "Priority": "Medium",
+                "Expected_Sec": "8 pulses",
+                "Actual_Sec": f"{len(wd_strokes)} pulses",
+                "Technical_Evidence": f"Sharp spec requires exactly 8 weight detection pulses (4 CW, 4 CCW).\nFound {len(wd_strokes)} pulses."
+            })
+            
+        # Check ON time (0.3s) and OFF time (0.6s)
+        avg_on = round(sum(wd_on_times) / len(wd_on_times), 2) if wd_on_times else 0
+        avg_off = round(sum(wd_off_times) / len(wd_off_times), 2) if wd_off_times else 0
+        
+        if abs(avg_on - 0.3) > TOLERANCE or abs(avg_off - 0.6) > TOLERANCE:
+            defects.append({
+                "Row_Index": f"{wd_strokes[0]['start_row']}-{wd_strokes[-1]['end_row']}",
+                "Test_Name": "Weight Detection Timings",
+                "Status": "FAIL", "Severity": "High", "Priority": "Medium",
+                "Expected_Sec": "ON: 0.3s, OFF: 0.6s",
+                "Actual_Sec": f"ON: {avg_on}s, OFF: {avg_off}s",
+                "Technical_Evidence": f"Sharp spec requires 300ms ON / 600ms OFF.\nActual average: {avg_on}s ON / {avg_off}s OFF."
+            })
+            
+        # Check level borders
+        expected_level = "Unknown"
+        if max_rpm > 140: expected_level = "1 or 2"
+        elif max_rpm > 60: expected_level = "2 or 3"
+        elif max_rpm > 40: expected_level = "3 or 4"
+        
+        # We can just log this info for the user or validate if level_str is totally wrong
+        defects.append({
+            "Row_Index": f"{wd_strokes[0]['start_row']}-{wd_strokes[-1]['end_row']}",
+            "Test_Name": "Weight Detection Level Output",
+            "Status": "PASS" if expected_level != "Unknown" else "WARNING",
+            "Severity": "Low", "Priority": "Low",
+            "Expected_Sec": "Expected Level based on RPM",
+            "Actual_Sec": f"Max RPM: {max_rpm}",
+            "Technical_Evidence": f"Max RPM detected during Weight Detect: {max_rpm}.\nBased on border values, selected level should be {expected_level}.\nActual Level Selected: {level_key}."
+        })
+
+    # (First fill row was calculated in section 4a)
 
     if first_fill_row is not None:
         actual_end   = fill_end_row if fill_end_row else raw_data_log[-1][0]
@@ -239,23 +316,42 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
     
     in_spin = False
     spin_start = 0
+    spin_dropout_count = 0
     raw_spin_blocks = []
     
     for r in raw_data_log:
         rpm = r[2]
-        if rpm > 150 and not in_spin:
+        pump_gear_on = (r[8] > 2.0 or r[6] > 2.0)
+        
+        if rpm > 150 and pump_gear_on and not in_spin:
             in_spin = True
             spin_start = r[0]
+            spin_dropout_count = 0
         elif rpm <= 10 and in_spin:
-            in_spin = False
-            duration_rows = r[0] - spin_start
-            duration_sec = duration_rows * 0.1
-            if duration_sec > 5.0: # Capture any spin > 5s
-                raw_spin_blocks.append({
-                    "start": spin_start,
-                    "end": r[0],
-                    "duration_sec": duration_sec
-                })
+            spin_dropout_count += 1
+            if spin_dropout_count > 10: # 1 second of confirmed low RPM
+                in_spin = False
+                end_row = r[0] - 10
+                duration_rows = end_row - spin_start
+                duration_sec = duration_rows * 0.1
+                if duration_sec > 5.0: # Capture any spin > 5s
+                    raw_spin_blocks.append({
+                        "start": spin_start,
+                        "end": end_row,
+                        "duration_sec": duration_sec
+                    })
+        else:
+            spin_dropout_count = 0
+
+    if in_spin:
+        duration_rows = raw_data_log[-1][0] - spin_start
+        duration_sec = duration_rows * 0.1
+        if duration_sec > 5.0:
+            raw_spin_blocks.append({
+                "start": spin_start,
+                "end": raw_data_log[-1][0],
+                "duration_sec": duration_sec
+            })
 
     # Group into logical phases based on water fills
     logical_phases = []
@@ -268,11 +364,16 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
             
             # Check if water filled between prev_block["end"] and curr_block["start"]
             water_filled = False
+            valve_ticks = 0
             for row in raw_data_log:
                 if prev_block["end"] <= row[0] <= curr_block["start"]:
-                    if row[3] > 0.5 or row[4] > 0.5 or row[5] > 0.5:
-                        water_filled = True
-                        break
+                    if row[3] > 2.0 or row[4] > 2.0 or row[5] > 2.0:
+                        valve_ticks += 1
+                        if valve_ticks >= 3:
+                            water_filled = True
+                            break
+                    else:
+                        valve_ticks = 0
                 elif row[0] > curr_block["start"]:
                     break
                     
@@ -284,17 +385,24 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
                 
         logical_phases.append(current_phase)
 
-    # Pick the longest attempt per logical phase
+    # Pick the longest attempt per logical phase but keep phase boundaries
     spin_blocks = []
     for phase in logical_phases:
         longest_block = max(phase, key=lambda b: b["duration_sec"])
         if longest_block["duration_sec"] > 30.0:
-            spin_blocks.append(longest_block)
+            spin_blocks.append({
+                "start": phase[0]["start"],
+                "end": phase[-1]["end"],
+                "duration_sec": (phase[-1]["end"] - phase[0]["start"]) * 0.1,
+                "longest_block": longest_block
+            })
 
     # ── 6\. Chronological Wash Phase Tracking \(M2 -> M3 -> M4 -> MU\) ───────────
     all_valid_strokes = [s for s in calibrated if fill_end_row is None or s["start_row"] > fill_end_row]
-    first_spin_start = spin_blocks[0]["start"] if spin_blocks else float('inf')
-    valid_strokes = [s for s in all_valid_strokes if s["end_row"] < first_spin_start]
+    # We cannot use first_spin_start to truncate valid_strokes because Balance Spins 
+    # during the wash phase will prematurely truncate it. The loop below already handles 
+    # filtering via drain_ref and elec_on > 10.0s.
+    valid_strokes = all_valid_strokes
 
     # Expected wash duration
     expected_wash_sec = None
@@ -318,14 +426,19 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
     # Find drain row (to stop wash phases)
     first_motor_row = valid_strokes[0]["start_row"] if valid_strokes else None
     first_drain_row = None
+    pump_ticks = 0
     for r in raw_data_log:
-        if first_motor_row and r[0] > first_motor_row + 100 and r[8] > 2.0:
-            first_drain_row = r[0]
-            break
+        if first_motor_row and r[0] > first_motor_row + 100:
+            if r[8] > 2.0:
+                pump_ticks += 1
+                if pump_ticks >= 3:
+                    first_drain_row = r[0] - 2
+                    break
+            else:
+                pump_ticks = 0
 
     drain_ref = first_drain_row if first_drain_row else 9_999_999
-    spin_rows = [r[0] for r in raw_data_log if r[2] > 150.0]
-    last_spin_row = spin_rows[-1] if spin_rows else 0
+    last_spin_row = spin_blocks[-1]["end"] if spin_blocks else 0
 
     active_wash_time = 0.0
     m2, m3, m4, mu, aw = [], [], [], [], []
@@ -335,9 +448,37 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
     m4_start, m4_end = None, None
     mu_start, mu_end = None, None
     
-    # Track pattern to split M4 and MU
     m4_finished_pattern_wise = False
     consecutive_mu_strokes = 0
+    
+    # Determine M2 and M3 subtotal cutoffs dynamically per V4 spec for ALL groups
+    is_lvl4 = (level_str in ["LEV-4", "4", "11_13"] or level_key == "4")
+    cg_clean = str(course_group).replace(" ", "")
+    is_grp1 = (cg_clean == "Group1" or program_name in COURSE_GROUPS.get("Group 1", []))
+    is_grp2 = (cg_clean == "Group2" or program_name in COURSE_GROUPS.get("Group 2", []))
+    is_grp3 = (cg_clean == "Group3" or program_name in COURSE_GROUPS.get("Group 3", []))
+
+    if is_grp1:
+        m2_limit = 360.0 if is_lvl4 else 60.0
+        m3_limit = m2_limit + (720.0 if is_lvl4 else 120.0)
+    elif is_grp2:
+        m2_limit = 60.0
+        m3_limit = m2_limit + 180.0
+    elif is_grp3:
+        m2_limit = 60.0
+        m3_limit = m2_limit + 180.0
+    else:
+        m2_limit = 60.0
+        m3_limit = 240.0
+        
+    mu_limit = 120.0 if is_lvl4 else 60.0
+        
+    # Disable MU detection for Group 3 as it does not have MU
+    if is_grp3:
+        m4_finished_pattern_wise = False
+        allow_mu = False
+    else:
+        allow_mu = True
     
     for idx, s in enumerate(valid_strokes):
         if last_spin_row > 0 and s["start_row"] > last_spin_row:
@@ -356,26 +497,63 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
         off_time = s.get("elec_off", 0.0)
         if off_time is not None and off_time <= 5.0:
             active_wash_time += off_time
-            
-        # Determine M2 and M3 subtotal cutoffs dynamically per V4 spec for ALL groups
-        is_lvl4 = (level_str in ["LEV-4", "4", "11_13"] or level_key == "4")
-        cg_clean = str(course_group).replace(" ", "")
-        is_grp1 = (cg_clean == "Group1" or program_name in COURSE_GROUPS.get("Group 1", []))
-        is_grp2 = (cg_clean == "Group2" or program_name in COURSE_GROUPS.get("Group 2", []))
-        is_grp3 = (cg_clean == "Group3" or program_name in COURSE_GROUPS.get("Group 3", []))
 
-        if is_grp1:
-            m2_limit = 360.0 if is_lvl4 else 60.0
-            m3_limit = m2_limit + (720.0 if is_lvl4 else 120.0)
-        elif is_grp2:
-            m2_limit = 60.0
-            m3_limit = m2_limit + 180.0
-        elif is_grp3:
-            m2_limit = 60.0
-            m3_limit = m2_limit + 180.0
-        else:
-            m2_limit = 60.0
-            m3_limit = 240.0
+        # Pattern Recognition for MU (Always evaluate if allowed, to catch early MU transitions)
+        if not m4_finished_pattern_wise and allow_mu:
+            is_interrupted = False
+            end_idx = s["end_row"]
+            valve_ticks = 0
+            # Scan raw data around end_row to see if valve opened
+            for r in raw_data_log:
+                if r[0] < end_idx - 5: continue
+                if r[0] > end_idx + 100: break
+                if r[3] > 4.0 or r[4] > 4.0:
+                    valve_ticks += 1
+                    if valve_ticks >= 3:
+                        is_interrupted = True
+                        break
+                else:
+                    valve_ticks = 0
+                    
+            if not is_interrupted and s["elec_on"] <= 0.5 and off_time is not None and 0.5 <= off_time <= 1.5:
+                consecutive_mu_strokes += 1
+            else:
+                consecutive_mu_strokes = 0
+                
+            # If we see 3 consecutive MU pattern strokes, we declare M4 finished retroactively!
+            if consecutive_mu_strokes >= 3:
+                m4_finished_pattern_wise = True
+                
+                # Move the last 2 strokes from m4, m3, or m2 into mu
+                to_move = []
+                for _ in range(2):
+                    if m4: to_move.append(m4.pop())
+                    elif m3: to_move.append(m3.pop())
+                    elif m2: to_move.append(m2.pop())
+                
+                to_move.reverse() # Put them back in chronological order
+                mu.extend(to_move)
+                mu.append(s)
+                
+                if not mu_start: mu_start = mu[0]["start_row"]
+                mu_end = s["end_row"]
+                
+                # Fix the end rows of previous phases since we popped strokes
+                if m4: m4_end = m4[-1]["end_row"]
+                else: m4_start, m4_end = None, None
+                
+                if m3: m3_end = m3[-1]["end_row"]
+                else: m3_start, m3_end = None, None
+                
+                if m2: m2_end = m2[-1]["end_row"]
+                else: m2_start, m2_end = None, None
+                continue
+
+        if m4_finished_pattern_wise:
+            mu.append(s)
+            if not mu_start: mu_start = s["start_row"]
+            mu_end = s["end_row"]
+            continue
 
         # Classify based on active wash time for M2 and M3
         if active_wash_time <= m2_limit:
@@ -387,47 +565,9 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
             if not m3_start: m3_start = s["start_row"]
             m3_end = s["end_row"]
         else:
-            # We are past M3. It is either M4 or MU.
-            # Determine dynamically using Pattern Recognition!
-            if not m4_finished_pattern_wise:
-                # Is this an MU pattern stroke? (~0.3s ON, ~0.7s OFF)
-                # But wait, it must NOT be interrupted by a water valve!
-                is_interrupted = False
-                end_idx = s["end_row"]
-                # Scan raw data around end_row to see if valve opened
-                for r in raw_data_log:
-                    if r[0] < end_idx - 5: continue
-                    if r[0] > end_idx + 100: break
-                    if r[3] > 4.0 or r[4] > 4.0:
-                        is_interrupted = True
-                        break
-                        
-                if not is_interrupted and s["elec_on"] <= 0.5 and off_time is not None and 0.5 <= off_time <= 1.5:
-                    consecutive_mu_strokes += 1
-                else:
-                    consecutive_mu_strokes = 0
-                    
-                # If we see 3 consecutive MU pattern strokes, we declare M4 finished retroactively!
-                if consecutive_mu_strokes >= 3:
-                    m4_finished_pattern_wise = True
-                    # Move those 3 strokes from M4 to MU
-                    for _ in range(2):
-                        popped_stroke = m4.pop()
-                        mu.insert(0, popped_stroke)
-                    mu.insert(0, s)
-                    if not mu_start: mu_start = mu[0]["start_row"]
-                    mu_end = s["end_row"]
-                    m4_end = m4[-1]["end_row"] if m4 else m3_end
-                    continue
-                else:
-                    m4.append(s)
-                    if not m4_start: m4_start = s["start_row"]
-                    m4_end = s["end_row"]
-            else:
-                # M4 already finished, everything else is MU
-                mu.append(s)
-                if not mu_start: mu_start = s["start_row"]
-                mu_end = s["end_row"]
+            m4.append(s)
+            if not m4_start: m4_start = s["start_row"]
+            m4_end = s["end_row"]
 
     # Helper for appending Phase Tracking PASS records
     def append_phase_tracking(name, start, end, expected_sec):
@@ -446,19 +586,20 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
         })
 
     # Append Phase Tracking (Pre-Wash vs Main Wash)
-    append_phase_tracking("Pre-Wash M2", m2_start, m2_end, "60s (Active)")
-    append_phase_tracking("Pre-Wash M3", m3_start, m3_end, "180s (Active)")
-    if m4_start: append_phase_tracking("Main Wash M4", m4_start, m4_end, "720s+ (Active)")
-    if mu_start: append_phase_tracking("MU Untangle", mu_start, mu_end, "N/A")
+    append_phase_tracking("Pre-Wash M2", m2_start, m2_end, f"{int(m2_limit)}s (Active)")
+    append_phase_tracking("Pre-Wash M3", m3_start, m3_end, f"{int(m3_limit - m2_limit)}s (Active)")
+    m4_expected = f"{int(expected_wash_sec)}s (Active)" if expected_wash_sec else "Unknown"
+    if m4_start: append_phase_tracking("Main Wash M4", m4_start, m4_end, m4_expected)
+    if mu_start: append_phase_tracking("MU Untangle", mu_start, mu_end, f"{int(mu_limit)}s (Active)")
 
     # ── 7. Per-stroke validation ───────────────────────────────────────────────
-    def validate_movement(movement_strokes, phase_name, expected_specs):
+    def validate_movement(movement_strokes, phase_name, expected_specs, overall_range="0-0"):
         '''Returns a list of FAIL dicts — one per failing ON or OFF measurement.'''
         result = []
 
         if not movement_strokes:
             result.append({
-                "Row_Index":          "N/A",
+                "Row_Index":          overall_range,
                 "Test_Name":          f"{phase_name} Agitation - Dead Motor",
                 "Status":             "FAIL",
                 "Severity":           "Critical",
@@ -484,12 +625,17 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
             # ── Check for Water Valve Interruption ──
             is_interrupted = False
             end_idx = s["end_row"]
+            valve_ticks = 0
             for r in raw_data_log:
                 if r[0] < end_idx - 10: continue
                 if r[0] > end_idx + 100: break
                 if r[3] > 4.0 or r[4] > 4.0:
-                    is_interrupted = True
-                    break
+                    valve_ticks += 1
+                    if valve_ticks >= 3:
+                        is_interrupted = True
+                        break
+                else:
+                    valve_ticks = 0
 
             # ── Mechanical Inertia Compensation (Cycle Time) ──
             cycle_pass = False
@@ -573,24 +719,28 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
         return result
 
     # ── 8. Run validations in order ───────────────────────────────────────────
-    skip_m2_m3 = (program_name == "Quick")
+    if expected_wash_sec:
+        skip_m2_m3 = (program_name == "Quick")
 
-    if skip_m2_m3:
-        m4 = sorted(m2 + m3 + m4, key=lambda s: s["start_row"])
-        m2, m3 = [], []
-    else:
-        defects.extend(validate_movement(m2, "M2", spec_set["m2"]))
-        defects.extend(validate_movement(m3, "M3", spec_set["m3"]))
+        if skip_m2_m3:
+            m4 = sorted(m2 + m3 + m4, key=lambda s: s["start_row"])
+            m2, m3 = [], []
+        else:
+            overall = f"{valid_strokes[0]['start_row']}-{valid_strokes[-1]['end_row']}" if valid_strokes else "0-0"
+            defects.extend(validate_movement(m2, "M2", spec_set["m2"], overall))
+            defects.extend(validate_movement(m3, "M3", spec_set["m3"], overall))
 
-    defects.extend(validate_movement(m4, "M4", spec_set["m4"]))
+        overall = f"{valid_strokes[0]['start_row']}-{valid_strokes[-1]['end_row']}" if valid_strokes else "0-0"
+        
+        defects.extend(validate_movement(m4, "M4", spec_set["m4"], overall))
 
-    if program_name == "Blanket":
-        defects.extend(validate_movement(mu, "MU", (TIMINGS["Blanket_MU"]["on"], TIMINGS["Blanket_MU"]["off"])))
-    elif course_group != "Group3":
-        defects.extend(validate_movement(mu, "MU", (TIMINGS["MU"]["on"], TIMINGS["MU"]["off"])))
+        if program_name == "Blanket":
+            defects.extend(validate_movement(mu, "MU", (TIMINGS["Blanket_MU"]["on"], TIMINGS["Blanket_MU"]["off"]), overall))
+        elif course_group != "Group3":
+            defects.extend(validate_movement(mu, "MU", global_mu_spec, overall))
 
-    if aw:
-        defects.extend(validate_movement(aw, "Anti-Wrinkle", (0.8, 1.0)))
+        if aw:
+            defects.extend(validate_movement(aw, "Anti-Wrinkle", (0.8, 1.0), overall))
 
     if m4 and expected_wash_sec:
         first_m4 = m4_start
@@ -657,14 +807,19 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
         softener_was_on = False
         softener_start = 0
         softener_end = 0
+        soft_ticks = 0
         for r in raw_data_log:
             if spin_end < r[0] < rinse_strokes[0]["start_row"]:
-                if r[3] > 0.5 or r[4] > 0.5: # Water filling
+                if r[3] > 2.0 or r[4] > 2.0: # Water filling
                     if r[5] > 2.0: # Softener > 2V
-                        if not softener_was_on:
-                            softener_was_on = True
-                            softener_start = r[0]
-                        softener_end = r[0]
+                        soft_ticks += 1
+                        if soft_ticks >= 5: # 500ms debounce
+                            if not softener_was_on:
+                                softener_was_on = True
+                                softener_start = r[0] - 4
+                            softener_end = r[0]
+                    else:
+                        soft_ticks = 0
                         
         if is_final_rinse:
             if not softener_was_on:
@@ -787,24 +942,24 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
         if is_gentle:
             expected_max_rpm = 400
             if duration_s <= 300:
-                milestones = [(15, 300), (35, 300), (155, 400), (240, 400)]
+                milestones = [(15, 35, 300), (45, 240, 400)]
             elif duration_s <= 550:
-                milestones = [(15, 300), (35, 300), (155, 400), (480, 400)]
+                milestones = [(15, 35, 300), (45, 480, 400)]
             else:
-                milestones = [(15, 300), (35, 300), (155, 400), (720, 400)]
+                milestones = [(15, 35, 300), (45, 720, 400)]
         else:
             expected_max_rpm = 700
             if i == 0:
                 # Balance Spin
-                milestones = [(15, 300), (35, 300), (155, 600), (160, 600), (180, 700)]
+                milestones = [(15, 35, 300), (45, 155, 600), (170, 180, 700)]
             else:
                 # Intermediate & Final Spins
                 if duration_s <= 300:
-                    milestones = [(15, 300), (35, 300), (155, 600), (160, 600), (180, 700), (240, 700)]
+                    milestones = [(15, 35, 300), (45, 155, 600), (170, 240, 700)]
                 elif duration_s <= 550:
-                    milestones = [(15, 300), (35, 300), (155, 600), (160, 600), (180, 700), (480, 700)]
+                    milestones = [(15, 35, 300), (45, 155, 600), (170, 480, 700)]
                 else:
-                    milestones = [(15, 300), (35, 300), (155, 600), (160, 600), (180, 700), (720, 700)]
+                    milestones = [(15, 35, 300), (45, 155, 600), (170, 720, 700)]
 
         # --- 1. Spin Pause Validation ---
         spin_start_row = block["start"]
@@ -812,8 +967,11 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
         last_agitation_row = 0
         while search_idx >= 0:
             if rpm_lookup.get(search_idx, 0) > 50:
-                last_agitation_row = search_idx
-                break
+                # Require 3 consecutive samples (300ms) to defeat inductive RPM noise during pump drain
+                if (rpm_lookup.get(search_idx - 1, 0) > 50 and 
+                    rpm_lookup.get(search_idx - 2, 0) > 50):
+                    last_agitation_row = search_idx
+                    break
             search_idx -= 1
             
         if last_agitation_row > 0:
@@ -841,35 +999,38 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
             })
 
         # --- 2. Spin Milestones Validation ---
-        prev_m_sec = 0
-        
+        longest = block["longest_block"]
         # Find the deceleration start row (drop_start_row) to exclude free-fall from average
-        temp_drop_start = block["end"]
-        while temp_drop_start > block["start"]:
-            if rpm_lookup.get(temp_drop_start, 0) > (expected_max_rpm * 0.7):
-                break
-            temp_drop_start -= 1
+        temp_drop_start = longest["end"]
+        for i in range(len(raw_data_log)-1, 2, -1):
+            r = raw_data_log[i]
+            if r[0] > longest["end"]: continue
+            if r[0] < longest["start"]: break
+            if r[7] > 2.0: # motor_v > 2.0 indicates motor is still being commanded
+                # Debounce: Ensure it's not a 1-tick noise spike by checking previous rows
+                if raw_data_log[i-1][7] > 2.0 and raw_data_log[i-2][7] > 2.0:
+                    temp_drop_start = min(longest["end"], r[0] + 50) # 5s buffer after power off
+                    break
             
-        for m_sec, m_target_rpm in milestones:
-            if block["duration_sec"] < (m_sec - 5.0):
-                prev_m_sec = m_sec
+        for start_sec, end_sec, m_target_rpm in milestones:
+            if longest["duration_sec"] < (start_sec + 5.0):
                 continue
             
-            start_row = block["start"] + int(prev_m_sec * 10)
-            end_row = block["start"] + int(m_sec * 10)
+            actual_end_sec = min(end_sec, longest["duration_sec"])
+            
+            start_row = longest["start"] + int(start_sec * 10)
+            end_row = longest["start"] + int(actual_end_sec * 10)
             
             # Cap the end_row to exclude the deceleration phase
             if end_row > temp_drop_start:
                 end_row = temp_drop_start
                 
             if start_row >= end_row:
-                prev_m_sec = m_sec
                 continue
                 
             actual_rpms = [rpm_lookup[r] for r in range(start_row, end_row + 1) if r in rpm_lookup]
             
             if not actual_rpms:
-                prev_m_sec = m_sec
                 continue
                 
             avg_rpm = sum(actual_rpms) / len(actual_rpms)
@@ -879,15 +1040,15 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
             if abs(delta_rpm) <= 20:
                 status = "PASS"
                 severity = "Low"
-                msg = f"Interval [{prev_m_sec}s - {m_sec}s].\nTarget: {m_target_rpm} RPM.\nAverage Actual: {avg_rpm:.2f} RPM (Within tolerance)."
+                msg = f"Interval [{start_sec}s - {actual_end_sec}s].\nTarget: {m_target_rpm} RPM.\nAverage Actual: {avg_rpm:.2f} RPM (Within tolerance)."
             else:
                 status = "FAIL"
                 severity = "High"
-                msg = f"Interval [{prev_m_sec}s - {m_sec}s].\nTarget: {m_target_rpm} RPM.\nAverage Actual: {avg_rpm:.2f} RPM (Out of tolerance)."
+                msg = f"Interval [{start_sec}s - {actual_end_sec}s].\nTarget: {m_target_rpm} RPM.\nAverage Actual: {avg_rpm:.2f} RPM (Out of tolerance)."
 
             defects.append({
                 "Row_Index":          f"{start_row}-{end_row}",
-                "Test_Name":          f"{spin_name} - Interval {m_sec}s Check",
+                "Test_Name":          f"{spin_name} - Interval {actual_end_sec}s Check",
                 "Status":             status,
                 "Severity":           severity,
                 "Priority":           "Medium",
@@ -896,8 +1057,6 @@ def analyze_telemetry(raw_data_log, program_name, level_str,
                 "Delta_Sec":          f"{delta_rpm:.2f} RPM",
                 "Technical_Evidence": msg
             })
-            
-            prev_m_sec = m_sec
             
 
 
