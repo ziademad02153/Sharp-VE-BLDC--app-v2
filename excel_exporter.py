@@ -32,7 +32,7 @@ class ExcelExporter:
 
         columns_raw = [
             "Row_Index", "H", "Min", "Sec", "ms", "Motor_RPM", "Cold_V", "Hot_V",
-            "Softener", "Pump", "Motor_V", "GearMotor"
+            "Softener", "GearMotor", "Motor_V", "Pump"
         ]
         if len(transformed_raw) > 0 and len(transformed_raw[0]) == 13:
             columns_raw.append("Door")
