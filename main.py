@@ -568,6 +568,14 @@ class MainUI(QMainWindow):
         grid_layout.addWidget(QLabel("Delay Start:"), 3, 0)
         grid_layout.addWidget(self.delay_combo, 3, 1)
 
+        self.anti_wrinkle_combo = QComboBox()
+        self.anti_wrinkle_combo.addItems(["OFF", "ON"])
+        self.anti_wrinkle_combo.currentTextChanged.connect(lambda: self.change_program(self.program_combo.currentText()))
+        lbl_aw = QLabel("Anti-Wrinkle Option:")
+        lbl_aw.setStyleSheet(lbl_style)
+        grid_layout.addWidget(lbl_aw, 3, 2)
+        grid_layout.addWidget(self.anti_wrinkle_combo, 3, 3)
+
         # Action Buttons Layout (Horizontal Row)
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(10)
@@ -702,7 +710,8 @@ class MainUI(QMainWindow):
         rinse_over = self.rinse_time_combo.currentText()
         spin_over = self.spin_time_combo.currentText()
         self.logic_mon.set_program(prog_str, level=level_str, soak_option=soak_str, delay_option=delay_str, 
-                                   wash_override=wash_over, rinse_override=rinse_over, spin_override=spin_over) 
+                                   wash_override=wash_over, rinse_override=rinse_over, spin_override=spin_over,
+                                   anti_wrinkle_selected=(self.anti_wrinkle_combo.currentText() == "ON")) 
 
     def on_daq_error(self, err_msg):
         self.add_log(f"DAQ ERROR: {err_msg}")
@@ -829,6 +838,7 @@ class MainUI(QMainWindow):
                 rinse_override=self.rinse_time_combo.currentText(),
                 spin_override=self.spin_time_combo.currentText()
             )
+
             self.add_log(f"Agitation validation: {len(agitation_defects)} defects found.", "SUCCESS")
         except Exception as ag_err:
             self.add_log(f"AGITATION VALIDATOR ERROR: {ag_err}", "ERROR")

@@ -66,7 +66,7 @@ class LogicMonitor(QObject):
         self.analysis_summary.append(res)
         self.test_result.emit(res)
 
-    def set_program(self, ui_program_name, level="LEV-1", soak_option="No Soak", delay_option="None", wash_override="Default", rinse_override="Default", spin_override="Default"):
+    def set_program(self, ui_program_name, level="LEV-1", soak_option="No Soak", delay_option="None", wash_override="Default", rinse_override="Default", spin_override="Default", anti_wrinkle_selected=False):
         # Direct passthrough — main.py combo box sends exact program names
         # that match sharp_spec.json keys (e.g. "Heavy", "Quick Rinse")
         valid_programs = [
@@ -95,7 +95,7 @@ class LogicMonitor(QObject):
                 pass
                 
         self.log_event.emit(f"Program set to {self.current_program} ({level}) - Soak: {soak_option} - Delay: {delay_option}")
-        self.sequence_validator.set_program(self.current_program, level, soak_option, delay_option, wash_override, rinse_override, spin_override)
+        self.sequence_validator.set_program(self.current_program, level, soak_option, delay_option, wash_override, rinse_override, spin_override, anti_wrinkle_selected)
         
     def process_row(self, data):
         try:

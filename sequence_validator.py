@@ -36,13 +36,14 @@ class SequenceValidator(QObject):
         except Exception as e:
             self.log_callback(f"SequenceValidator Load Error: {e}")
 
-    def set_program(self, program_name, level, soak_option="No Soak", delay_option="None", wash_override="Default", rinse_override="Default", spin_override="Default"):
+    def set_program(self, program_name, level, soak_option="No Soak", delay_option="None", wash_override="Default", rinse_override="Default", spin_override="Default", anti_wrinkle_selected=False):
         """Builds a linear list of expected phases based on Sharp specifications"""
         self.current_program = program_name
         self.current_level = level
         self.wash_override = wash_override
         self.rinse_override = rinse_override
         self.spin_override = spin_override
+        self.anti_wrinkle_selected = anti_wrinkle_selected
         self.expected_phases = []
         self.current_step_index = 0
         self.time_in_current_phase = 0
@@ -142,7 +143,7 @@ class SequenceValidator(QObject):
         # 6. Anti-Wrinkle Exceptions
         # Cancelled for: Quick, Delicates, Wool, Tub Clean
         no_aw_courses = ["Quick", "Delicates", "Wool", "Sports Wear", "Tub Clean"]
-        if final_spin_val > 0 and program_name not in no_aw_courses:
+        if final_spin_val > 0 and program_name not in no_aw_courses and self.anti_wrinkle_selected:
             self.expected_phases.append({"name": "ANTI_WRINKLE", "duration_sec": 120, "type": "max_limit"})
 
         total_dur = sum(p["duration_sec"] for p in self.expected_phases)
